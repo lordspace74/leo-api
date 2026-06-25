@@ -20,6 +20,7 @@ import { RolesGuard } from '../common/guards/roles.guard';
 import { Roles } from '../common/decorators/roles.decorator';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
 import { JsonApiInterceptor } from '../common/interceptors/json-api.interceptor';
+import { JsonApiRequestInterceptor } from '../common/interceptors/json-api-request.interceptor';
 import { UserRole } from './enums/user-role.enum';
 import { User } from './entities/user.entity';
 
@@ -38,6 +39,7 @@ export class UsersController {
   @Post()
   @Roles(UserRole.ADMIN)
   @HttpCode(HttpStatus.CREATED)
+  @UseInterceptors(new JsonApiRequestInterceptor('users'))
   create(@Body() dto: CreateUserDto) {
     return this.usersService.create(dto);
   }
@@ -48,6 +50,7 @@ export class UsersController {
   }
 
   @Patch(':id')
+  @UseInterceptors(new JsonApiRequestInterceptor('users'))
   update(
     @Param('id', ParseUUIDPipe) id: string,
     @Body() dto: UpdateUserDto,

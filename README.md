@@ -95,8 +95,17 @@ npm run test:cov      # run with coverage
 
 ## API reference
 
-All endpoints accept and return `application/json` (JSON:API shaped).
-Authenticated endpoints require an `Authorization: Bearer <token>` header.
+Responses use the JSON:API media type `application/vnd.api+json`.
+Write operations on the `users` resource (`POST /users`, `PATCH /users/:id`,
+and `POST /auth/register`) take a JSON:API document body:
+
+```json
+{ "data": { "type": "users", "attributes": { … } } }
+```
+
+`POST /auth/login` is an auth action rather than a resource operation, so it
+accepts a plain credentials body. Authenticated endpoints require an
+`Authorization: Bearer <token>` header.
 
 ### `POST /auth/register`
 
@@ -105,7 +114,7 @@ Creates a new `USER` account.
 ```bash
 curl -X POST http://localhost:3000/auth/register \
   -H 'Content-Type: application/json' \
-  -d '{"name":"Alice","email":"alice@example.com","password":"password"}'
+  -d '{"data":{"type":"users","attributes":{"name":"Alice","email":"alice@example.com","password":"password"}}}'
 ```
 
 ```json
@@ -139,6 +148,17 @@ curl -X POST http://localhost:3000/auth/login \
 
 Lists all users.
 
+### `POST /users` — _ADMIN only_
+
+Creates a user (an admin may set the `role`). Responds `201 Created`.
+
+```bash
+curl -X POST http://localhost:3000/users \
+  -H "Authorization: Bearer <token>" \
+  -H 'Content-Type: application/json' \
+  -d '{"data":{"type":"users","attributes":{"name":"New User","email":"new@example.com","password":"password","role":"USER"}}}'
+```
+
 ### `GET /users/:id`
 
 Returns a single user. A `USER` may only read their own record; an `ADMIN` may read any.
@@ -152,7 +172,7 @@ may update any user including their `role`.
 curl -X PATCH http://localhost:3000/users/<id> \
   -H "Authorization: Bearer <token>" \
   -H 'Content-Type: application/json' \
-  -d '{"name":"New Name"}'
+  -d '{"data":{"type":"users","attributes":{"name":"New Name"}}}'
 ```
 
 ### `DELETE /users/:id` — _ADMIN only_
@@ -169,6 +189,10 @@ delete themselves.
 - **Repository abstraction.** `UsersService` depends on an `IUserRepository`
   interface (injected by token), not on TypeORM directly — keeping the domain
   logic persistence-agnostic and the dependency direction inverted (DIP).
+- **JSON:API.** Responses carry the `application/vnd.api+json` media type and
+  the `{ data: { type, id, attributes } }` shape; errors use the spec's
+  `{ errors: [...] }` objects. Write requests are unwrapped from the JSON:API
+  document envelope by an interceptor, so the DTOs stay flat and reusable.
 - **Serialization** runs through `class-transformer`, so `@Exclude`-marked
   fields such as `password` never reach the response.
 - **Dependency overrides.** `multer` and `js-yaml` are pinned via npm

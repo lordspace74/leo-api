@@ -10,6 +10,7 @@ import { AuthService } from './auth.service';
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
 import { JsonApiInterceptor } from '../common/interceptors/json-api.interceptor';
+import { JsonApiRequestInterceptor } from '../common/interceptors/json-api-request.interceptor';
 import {
   JsonApiDocument,
   toResource,
@@ -20,7 +21,10 @@ export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
   @Post('register')
-  @UseInterceptors(new JsonApiInterceptor('users'))
+  @UseInterceptors(
+    new JsonApiRequestInterceptor('users'),
+    new JsonApiInterceptor('users'),
+  )
   register(@Body() dto: RegisterDto) {
     return this.authService.register(dto);
   }
