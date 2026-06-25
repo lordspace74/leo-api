@@ -1,98 +1,186 @@
-<p align="center">
-  <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="120" alt="Nest Logo" /></a>
-</p>
+# LeoVegas User API
 
-[circleci-image]: https://img.shields.io/circleci/build/github/nestjs/nest/master?token=abc123def456
-[circleci-url]: https://circleci.com/gh/nestjs/nest
+A RESTful API for managing users with role-based access control, built with
+**Node.js**, **TypeScript**, and **NestJS**, backed by **PostgreSQL** via
+**TypeORM**. Responses follow the [JSON:API](https://jsonapi.org/) specification.
 
-  <p align="center">A progressive <a href="http://nodejs.org" target="_blank">Node.js</a> framework for building efficient and scalable server-side applications.</p>
-    <p align="center">
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/v/@nestjs/core.svg" alt="NPM Version" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/l/@nestjs/core.svg" alt="Package License" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/dm/@nestjs/common.svg" alt="NPM Downloads" /></a>
-<a href="https://circleci.com/gh/nestjs/nest" target="_blank"><img src="https://img.shields.io/circleci/build/github/nestjs/nest/master" alt="CircleCI" /></a>
-<a href="https://discord.gg/G7Qnnhy" target="_blank"><img src="https://img.shields.io/badge/discord-online-brightgreen.svg" alt="Discord"/></a>
-<a href="https://opencollective.com/nest#backer" target="_blank"><img src="https://opencollective.com/nest/backers/badge.svg" alt="Backers on Open Collective" /></a>
-<a href="https://opencollective.com/nest#sponsor" target="_blank"><img src="https://opencollective.com/nest/sponsors/badge.svg" alt="Sponsors on Open Collective" /></a>
-  <a href="https://paypal.me/kamilmysliwiec" target="_blank"><img src="https://img.shields.io/badge/Donate-PayPal-ff3f59.svg" alt="Donate us"/></a>
-    <a href="https://opencollective.com/nest#sponsor"  target="_blank"><img src="https://img.shields.io/badge/Support%20us-Open%20Collective-41B883.svg" alt="Support us"></a>
-  <a href="https://twitter.com/nestframework" target="_blank"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow" alt="Follow us on Twitter"></a>
-</p>
-  <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
-  [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
+## Features
 
-## Description
+- Full user CRUD with JWT authentication
+- Role-based authorization (`USER` / `ADMIN`)
+- Request validation with `class-validator`
+- JSON:API-compliant responses and error objects
+- Layered architecture (controller → service → repository) following SOLID
 
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
+## Authorization rules
 
-## Project setup
+| Action                              | USER            | ADMIN |
+| ----------------------------------- | --------------- | ----- |
+| View own details                    | ✅              | ✅    |
+| View another user                   | ❌ `403`        | ✅    |
+| Update own details                  | ✅              | ✅    |
+| Update another user (incl. role)    | ❌ `403`        | ✅    |
+| List all users                      | ❌ `403`        | ✅    |
+| Delete a user                       | ❌ `403`        | ✅    |
+| Delete **self**                     | ❌ `403`        | ❌ `403` |
+| Change own role                     | ❌ `403`        | ✅    |
+
+Requests to non-existent users return `404`; unauthenticated requests return `401`.
+
+## Prerequisites
+
+- Node.js 20+
+- PostgreSQL 14+
+
+## Setup
+
+1. Install dependencies:
+
+   ```bash
+   npm install
+   ```
+
+2. Create a database and a `.env` file (copy the example):
+
+   ```bash
+   cp .env.example .env
+   ```
+
+   | Variable        | Default     | Description                  |
+   | --------------- | ----------- | ---------------------------- |
+   | `PORT`          | `3000`      | HTTP port                    |
+   | `DB_HOST`       | `localhost` | Postgres host                |
+   | `DB_PORT`       | `5432`      | Postgres port                |
+   | `DB_USERNAME`   | `postgres`  | Postgres user                |
+   | `DB_PASSWORD`   | `postgres`  | Postgres password            |
+   | `DB_DATABASE`   | `leo_api`   | Database name                |
+   | `JWT_SECRET`    | —           | Secret used to sign JWTs     |
+   | `JWT_EXPIRES_IN`| `1h`        | Access token lifetime        |
+
+   > The schema is created automatically on boot via TypeORM `synchronize`
+   > (development only). For production you would disable it and use migrations.
+
+## Running
 
 ```bash
-$ npm install
+npm run start         # start the API
+npm run start:dev     # start in watch mode
 ```
 
-## Compile and run the project
+The API listens on `http://localhost:3000`.
+
+## Seeding an admin
+
+Registration only ever creates `USER` accounts by design, so the first admin
+must be bootstrapped. The seed script is idempotent and reads its credentials
+from the environment (defaults shown):
 
 ```bash
-# development
-$ npm run start
-
-# watch mode
-$ npm run start:dev
-
-# production mode
-$ npm run start:prod
+npm run seed:admin
+# ADMIN_NAME=Admin ADMIN_EMAIL=admin@example.com ADMIN_PASSWORD=password
 ```
 
-## Run tests
+Override the defaults as needed:
 
 ```bash
-# unit tests
-$ npm run test
-
-# e2e tests
-$ npm run test:e2e
-
-# test coverage
-$ npm run test:cov
+ADMIN_EMAIL=you@example.com ADMIN_PASSWORD=supersecret npm run seed:admin
 ```
 
-## Deployment
-
-When you're ready to deploy your NestJS application to production, there are some key steps you can take to ensure it runs as efficiently as possible. Check out the [deployment documentation](https://docs.nestjs.com/deployment) for more information.
-
-If you are looking for a cloud-based platform to deploy your NestJS application, check out [Mau](https://mau.nestjs.com), our official platform for deploying NestJS applications on AWS. Mau makes deployment straightforward and fast, requiring just a few simple steps:
+## Testing
 
 ```bash
-$ npm install -g @nestjs/mau
-$ mau deploy
+npm test              # run unit tests
+npm run test:cov      # run with coverage
 ```
 
-With Mau, you can deploy your application in just a few clicks, allowing you to focus on building features rather than managing infrastructure.
+## API reference
 
-## Resources
+All endpoints accept and return `application/json` (JSON:API shaped).
+Authenticated endpoints require an `Authorization: Bearer <token>` header.
 
-Check out a few resources that may come in handy when working with NestJS:
+### `POST /auth/register`
 
-- Visit the [NestJS Documentation](https://docs.nestjs.com) to learn more about the framework.
-- For questions and support, please visit our [Discord channel](https://discord.gg/G7Qnnhy).
-- To dive deeper and get more hands-on experience, check out our official video [courses](https://courses.nestjs.com/).
-- Deploy your application to AWS with the help of [NestJS Mau](https://mau.nestjs.com) in just a few clicks.
-- Visualize your application graph and interact with the NestJS application in real-time using [NestJS Devtools](https://devtools.nestjs.com).
-- Need help with your project (part-time to full-time)? Check out our official [enterprise support](https://enterprise.nestjs.com).
-- To stay in the loop and get updates, follow us on [X](https://x.com/nestframework) and [LinkedIn](https://linkedin.com/company/nestjs).
-- Looking for a job, or have a job to offer? Check out our official [Jobs board](https://jobs.nestjs.com).
+Creates a new `USER` account.
 
-## Support
+```bash
+curl -X POST http://localhost:3000/auth/register \
+  -H 'Content-Type: application/json' \
+  -d '{"name":"Alice","email":"alice@example.com","password":"password"}'
+```
 
-Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
+```json
+{
+  "data": {
+    "type": "users",
+    "id": "…",
+    "attributes": { "name": "Alice", "email": "alice@example.com", "role": "USER", "created_at": "…", "updated_at": "…" }
+  }
+}
+```
 
-## Stay in touch
+### `POST /auth/login`
 
-- Author - [Kamil Myśliwiec](https://twitter.com/kammysliwiec)
-- Website - [https://nestjs.com](https://nestjs.com/)
-- Twitter - [@nestframework](https://twitter.com/nestframework)
+Returns the user plus a freshly minted access token in `meta`.
 
-## License
+```bash
+curl -X POST http://localhost:3000/auth/login \
+  -H 'Content-Type: application/json' \
+  -d '{"email":"alice@example.com","password":"password"}'
+```
 
-Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).
+```json
+{
+  "data": { "type": "users", "id": "…", "attributes": { … } },
+  "meta": { "access_token": "eyJhbGci…" }
+}
+```
+
+### `GET /users` — _ADMIN only_
+
+Lists all users.
+
+### `GET /users/:id`
+
+Returns a single user. A `USER` may only read their own record; an `ADMIN` may read any.
+
+### `PATCH /users/:id`
+
+Updates a user. A `USER` may update only their own non-role fields; an `ADMIN`
+may update any user including their `role`.
+
+```bash
+curl -X PATCH http://localhost:3000/users/<id> \
+  -H "Authorization: Bearer <token>" \
+  -H 'Content-Type: application/json' \
+  -d '{"name":"New Name"}'
+```
+
+### `DELETE /users/:id` — _ADMIN only_
+
+Deletes a user. Responds `204 No Content`. No user (including an admin) may
+delete themselves.
+
+## Design notes
+
+- **`access_token` is never persisted.** The JWT is stateless and verified by
+  signature, so storing it on the user row would be redundant, limited to a
+  single session, and a credential-at-rest risk. It is returned in the login
+  response `meta` and otherwise lives only client-side.
+- **Repository abstraction.** `UsersService` depends on an `IUserRepository`
+  interface (injected by token), not on TypeORM directly — keeping the domain
+  logic persistence-agnostic and the dependency direction inverted (DIP).
+- **Serialization** runs through `class-transformer`, so `@Exclude`-marked
+  fields such as `password` never reach the response.
+- **Dependency overrides.** `multer` and `js-yaml` are pinned via npm
+  `overrides` to patched versions to clear transitive security advisories
+  without downgrading framework majors; `npm audit` reports 0 vulnerabilities.
+
+## Project structure
+
+```
+src/
+  auth/            Registration, login, JWT strategy
+  users/           Entity, DTOs, service, controller, repository
+  common/          Guards, decorators, interceptors, filters, serializer
+  database/seeds/  Admin bootstrap script
+```
