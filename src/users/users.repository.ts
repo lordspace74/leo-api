@@ -35,11 +35,12 @@ export class UsersRepository implements IUserRepository {
     const user = await this.findById(id);
     if (!user) return null;
 
-    if (dto.password) {
-      dto.password = await bcrypt.hash(dto.password, 10);
+    const changes: Partial<User> = { ...dto };
+    if (changes.password) {
+      changes.password = await bcrypt.hash(changes.password, 10);
     }
 
-    Object.assign(user, dto);
+    Object.assign(user, changes);
     return this.repo.save(user);
   }
 
