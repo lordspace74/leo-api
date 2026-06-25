@@ -5,7 +5,9 @@
       "Bash(git checkout *)",
       "Bash(npx @nestjs/cli new . --package-manager npm --skip-git --language TypeScript)",
       "Bash(npm --version)",
-      "Bash(bun --version)"
+      "Bash(bun --version)",
+      "Bash(git commit -m ' *)",
+      "Bash(git add *)"
     ]
   }
 }

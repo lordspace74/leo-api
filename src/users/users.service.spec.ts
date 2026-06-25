@@ -1,0 +1,152 @@
+import { Test, TestingModule } from '@nestjs/testing';
+import { ForbiddenException, NotFoundException } from '@nestjs/common';
+import { UsersService } from './users.service';
+import { IUserRepository, USER_REPOSITORY } from './interfaces/user-repository.interface';
+import { User } from './entities/user.entity';
+import { UserRole } from './enums/user-role.enum';
+
+const buildUser = (overrides: Partial<User> = {}): User => ({
+  id: 'user-1',
+  name: 'John Doe',
+  email: 'john@example.com',
+  password: 'hashed',
+  role: UserRole.USER,
+  access_token: null,
+  created_at: new Date(),
+  updated_at: new Date(),
+  ...overrides,
+});
+
+describe('UsersService', () => {
+  let service: UsersService;
+  let repo: jest.Mocked<IUserRepository>;
+
+  beforeEach(async () => {
+    const repoMock: jest.Mocked<IUserRepository> = {
+      findAll: jest.fn(),
+      findById: jest.fn(),
+      findByEmail: jest.fn(),
+      create: jest.fn(),
+      update: jest.fn(),
+      delete: jest.fn(),
+    };
+
+    const module: TestingModule = await Test.createTestingModule({
+      providers: [
+        UsersService,
+        { provide: USER_REPOSITORY, useValue: repoMock },
+      ],
+    }).compile();
+
+    service = module.get(UsersService);
+    repo = module.get(USER_REPOSITORY);
+  });
+
+  describe('findAll', () => {
+    it('returns all users', async () => {
+      const users = [buildUser(), buildUser({ id: 'user-2' })];
+      repo.findAll.mockResolvedValue(users);
+
+      await expect(service.findAll()).resolves.toBe(users);
+      expect(repo.findAll).toHaveBeenCalledTimes(1);
+    });
+  });
+
+  describe('findById', () => {
+    it('returns the user when found', async () => {
+      const user = buildUser();
+      repo.findById.mockResolvedValue(user);
+
+      await expect(service.findById('user-1')).resolves.toBe(user);
+    });
+
+    it('throws NotFoundException when the user does not exist', async () => {
+      repo.findById.mockResolvedValue(null);
+
+      await expect(service.findById('missing')).rejects.toThrow(NotFoundException);
+    });
+  });
+
+  describe('update', () => {
+    it('lets a user update their own account', async () => {
+      const user = buildUser();
+      const updated = buildUser({ name: 'Jane' });
+      repo.update.mockResolvedValue(updated);
+
+      await expect(service.update(user, user.id, { name: 'Jane' })).resolves.toBe(updated);
+      expect(repo.update).toHaveBeenCalledWith(user.id, { name: 'Jane' });
+    });
+
+    it('lets an admin update another user', async () => {
+      const admin = buildUser({ id: 'admin-1', role: UserRole.ADMIN });
+      const updated = buildUser({ id: 'user-2', name: 'Changed' });
+      repo.update.mockResolvedValue(updated);
+
+      await expect(
+        service.update(admin, 'user-2', { name: 'Changed' }),
+      ).resolves.toBe(updated);
+    });
+
+    it('lets an admin change another user role', async () => {
+      const admin = buildUser({ id: 'admin-1', role: UserRole.ADMIN });
+      const updated = buildUser({ id: 'user-2', role: UserRole.ADMIN });
+      repo.update.mockResolvedValue(updated);
+
+      await expect(
+        service.update(admin, 'user-2', { role: UserRole.ADMIN }),
+      ).resolves.toBe(updated);
+    });
+
+    it('forbids a user from updating another user', async () => {
+      const user = buildUser();
+
+      await expect(
+        service.update(user, 'user-2', { name: 'Nope' }),
+      ).rejects.toThrow(ForbiddenException);
+      expect(repo.update).not.toHaveBeenCalled();
+    });
+
+    it('forbids a non-admin from changing their own role', async () => {
+      const user = buildUser();
+
+      await expect(
+        service.update(user, user.id, { role: UserRole.ADMIN }),
+      ).rejects.toThrow(ForbiddenException);
+      expect(repo.update).not.toHaveBeenCalled();
+    });
+
+    it('throws NotFoundException when admin updates a non-existent user', async () => {
+      const admin = buildUser({ id: 'admin-1', role: UserRole.ADMIN });
+      repo.update.mockResolvedValue(null);
+
+      await expect(
+        service.update(admin, 'missing', { name: 'Ghost' }),
+      ).rejects.toThrow(NotFoundException);
+    });
+  });
+
+  describe('delete', () => {
+    it('lets an admin delete another user', async () => {
+      const admin = buildUser({ id: 'admin-1', role: UserRole.ADMIN });
+      repo.findById.mockResolvedValue(buildUser({ id: 'user-2' }));
+
+      await service.delete(admin, 'user-2');
+      expect(repo.delete).toHaveBeenCalledWith('user-2');
+    });
+
+    it('forbids any user from deleting themselves', async () => {
+      const admin = buildUser({ id: 'admin-1', role: UserRole.ADMIN });
+
+      await expect(service.delete(admin, admin.id)).rejects.toThrow(ForbiddenException);
+      expect(repo.delete).not.toHaveBeenCalled();
+    });
+
+    it('throws NotFoundException when deleting a non-existent user', async () => {
+      const admin = buildUser({ id: 'admin-1', role: UserRole.ADMIN });
+      repo.findById.mockResolvedValue(null);
+
+      await expect(service.delete(admin, 'missing')).rejects.toThrow(NotFoundException);
+      expect(repo.delete).not.toHaveBeenCalled();
+    });
+  });
+});
