@@ -29,9 +29,16 @@ export class UsersService {
     return this.userRepo.create(dto);
   }
 
-  async findById(id: string): Promise<User> {
-    const user = await this.userRepo.findById(id);
-    if (!user) throw new NotFoundException(`User ${id} not found`);
+  async findById(requestingUser: User, targetId: string): Promise<User> {
+    const isAdmin = requestingUser.role === UserRole.ADMIN;
+    const isSelf = requestingUser.id === targetId;
+
+    if (!isAdmin && !isSelf) {
+      throw new ForbiddenException('You can only view your own account');
+    }
+
+    const user = await this.userRepo.findById(targetId);
+    if (!user) throw new NotFoundException(`User ${targetId} not found`);
     return user;
   }
 

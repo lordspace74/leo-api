@@ -1,5 +1,4 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { ForbiddenException } from '@nestjs/common';
 import { UsersController } from './users.controller';
 import { UsersService } from './users.service';
 import { User } from './entities/user.entity';
@@ -61,26 +60,12 @@ describe('UsersController', () => {
   });
 
   describe('findOne', () => {
-    it('lets a user view their own account', async () => {
+    it('delegates to the service with the requesting user', async () => {
       const user = buildUser();
       service.findById.mockResolvedValue(user);
 
-      await expect(controller.findOne(user.id, user)).resolves.toBe(user);
-    });
-
-    it('lets an admin view any account', async () => {
-      const admin = buildUser({ id: 'admin-1', role: UserRole.ADMIN });
-      const target = buildUser({ id: 'user-2' });
-      service.findById.mockResolvedValue(target);
-
-      await expect(controller.findOne('user-2', admin)).resolves.toBe(target);
-    });
-
-    it('forbids a user from viewing another account', async () => {
-      const user = buildUser();
-
-      await expect(controller.findOne('user-2', user)).rejects.toThrow(ForbiddenException);
-      expect(service.findById).not.toHaveBeenCalled();
+      await expect(controller.findOne('user-2', user)).resolves.toBe(user);
+      expect(service.findById).toHaveBeenCalledWith(user, 'user-2');
     });
   });
 

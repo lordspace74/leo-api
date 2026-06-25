@@ -11,7 +11,6 @@ import {
   UseInterceptors,
   HttpCode,
   HttpStatus,
-  ForbiddenException,
 } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { CreateUserDto } from './dto/create-user.dto';
@@ -44,18 +43,8 @@ export class UsersController {
   }
 
   @Get(':id')
-  async findOne(
-    @Param('id', ParseUUIDPipe) id: string,
-    @CurrentUser() user: User,
-  ) {
-    const isAdmin = user.role === UserRole.ADMIN;
-    const isSelf = user.id === id;
-
-    if (!isAdmin && !isSelf) {
-      throw new ForbiddenException('You can only view your own account');
-    }
-
-    return this.usersService.findById(id);
+  findOne(@Param('id', ParseUUIDPipe) id: string, @CurrentUser() user: User) {
+    return this.usersService.findById(user, id);
   }
 
   @Patch(':id')

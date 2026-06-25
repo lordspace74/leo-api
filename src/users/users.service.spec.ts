@@ -77,17 +77,33 @@ describe('UsersService', () => {
   });
 
   describe('findById', () => {
-    it('returns the user when found', async () => {
+    it('lets a user view their own account', async () => {
       const user = buildUser();
       repo.findById.mockResolvedValue(user);
 
-      await expect(service.findById('user-1')).resolves.toBe(user);
+      await expect(service.findById(user, user.id)).resolves.toBe(user);
+    });
+
+    it('lets an admin view any account', async () => {
+      const admin = buildUser({ id: 'admin-1', role: UserRole.ADMIN });
+      const target = buildUser({ id: 'user-2' });
+      repo.findById.mockResolvedValue(target);
+
+      await expect(service.findById(admin, 'user-2')).resolves.toBe(target);
+    });
+
+    it('forbids a user from viewing another account', async () => {
+      const user = buildUser();
+
+      await expect(service.findById(user, 'user-2')).rejects.toThrow(ForbiddenException);
+      expect(repo.findById).not.toHaveBeenCalled();
     });
 
     it('throws NotFoundException when the user does not exist', async () => {
+      const admin = buildUser({ id: 'admin-1', role: UserRole.ADMIN });
       repo.findById.mockResolvedValue(null);
 
-      await expect(service.findById('missing')).rejects.toThrow(NotFoundException);
+      await expect(service.findById(admin, 'missing')).rejects.toThrow(NotFoundException);
     });
   });
 
