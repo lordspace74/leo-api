@@ -1,0 +1,11 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git init *)",
+      "Bash(git checkout *)",
+      "Bash(npx @nestjs/cli new . --package-manager npm --skip-git --language TypeScript)",
+      "Bash(npm --version)",
+      "Bash(bun --version)"
+    ]
+  }
+}
