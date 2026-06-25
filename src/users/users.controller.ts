@@ -4,6 +4,7 @@ import {
   Patch,
   Delete,
   Param,
+  ParseUUIDPipe,
   Body,
   UseGuards,
   UseInterceptors,
@@ -34,7 +35,10 @@ export class UsersController {
   }
 
   @Get(':id')
-  async findOne(@Param('id') id: string, @CurrentUser() user: User) {
+  async findOne(
+    @Param('id', ParseUUIDPipe) id: string,
+    @CurrentUser() user: User,
+  ) {
     const isAdmin = user.role === UserRole.ADMIN;
     const isSelf = user.id === id;
 
@@ -47,7 +51,7 @@ export class UsersController {
 
   @Patch(':id')
   update(
-    @Param('id') id: string,
+    @Param('id', ParseUUIDPipe) id: string,
     @Body() dto: UpdateUserDto,
     @CurrentUser() user: User,
   ) {
@@ -57,7 +61,7 @@ export class UsersController {
   @Delete(':id')
   @Roles(UserRole.ADMIN)
   @HttpCode(HttpStatus.NO_CONTENT)
-  delete(@Param('id') id: string, @CurrentUser() user: User) {
+  delete(@Param('id', ParseUUIDPipe) id: string, @CurrentUser() user: User) {
     return this.usersService.delete(user, id);
   }
 }

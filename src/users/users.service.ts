@@ -2,6 +2,7 @@ import {
   Injectable,
   NotFoundException,
   ForbiddenException,
+  ConflictException,
   Inject,
 } from '@nestjs/common';
 import type { IUserRepository } from './interfaces/user-repository.interface';
@@ -36,6 +37,13 @@ export class UsersService {
 
     if (!isAdmin && dto.role) {
       throw new ForbiddenException('Only admins can change roles');
+    }
+
+    if (dto.email) {
+      const owner = await this.userRepo.findByEmail(dto.email);
+      if (owner && owner.id !== targetId) {
+        throw new ConflictException('Email already in use');
+      }
     }
 
     const updated = await this.userRepo.update(targetId, dto);

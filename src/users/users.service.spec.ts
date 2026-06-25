@@ -1,5 +1,9 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { ForbiddenException, NotFoundException } from '@nestjs/common';
+import {
+  ForbiddenException,
+  NotFoundException,
+  ConflictException,
+} from '@nestjs/common';
 import { UsersService } from './users.service';
 import { IUserRepository, USER_REPOSITORY } from './interfaces/user-repository.interface';
 import { User } from './entities/user.entity';
@@ -121,6 +125,27 @@ describe('UsersService', () => {
       await expect(
         service.update(admin, 'missing', { name: 'Ghost' }),
       ).rejects.toThrow(NotFoundException);
+    });
+
+    it('throws ConflictException when the new email belongs to another user', async () => {
+      const user = buildUser();
+      repo.findByEmail.mockResolvedValue(buildUser({ id: 'user-2' }));
+
+      await expect(
+        service.update(user, user.id, { email: 'taken@example.com' }),
+      ).rejects.toThrow(ConflictException);
+      expect(repo.update).not.toHaveBeenCalled();
+    });
+
+    it('allows keeping the same email (owner is the target user)', async () => {
+      const user = buildUser();
+      repo.findByEmail.mockResolvedValue(user);
+      const updated = buildUser({ name: 'Renamed' });
+      repo.update.mockResolvedValue(updated);
+
+      await expect(
+        service.update(user, user.id, { email: user.email, name: 'Renamed' }),
+      ).resolves.toBe(updated);
     });
   });
 
