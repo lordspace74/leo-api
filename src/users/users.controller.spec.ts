@@ -18,11 +18,14 @@ const buildUser = (overrides: Partial<User> = {}): User => ({
 
 describe('UsersController', () => {
   let controller: UsersController;
-  let service: jest.Mocked<Pick<UsersService, 'findAll' | 'findById' | 'update' | 'delete'>>;
+  let service: jest.Mocked<
+    Pick<UsersService, 'findAll' | 'create' | 'findById' | 'update' | 'delete'>
+  >;
 
   beforeEach(async () => {
     const serviceMock = {
       findAll: jest.fn(),
+      create: jest.fn(),
       findById: jest.fn(),
       update: jest.fn(),
       delete: jest.fn(),
@@ -43,6 +46,17 @@ describe('UsersController', () => {
       service.findAll.mockResolvedValue(users);
 
       await expect(controller.findAll()).resolves.toBe(users);
+    });
+  });
+
+  describe('create', () => {
+    it('delegates to the service', async () => {
+      const created = buildUser();
+      service.create.mockResolvedValue(created);
+      const dto = { name: 'John', email: 'john@example.com', password: 'password' };
+
+      await expect(controller.create(dto)).resolves.toBe(created);
+      expect(service.create).toHaveBeenCalledWith(dto);
     });
   });
 

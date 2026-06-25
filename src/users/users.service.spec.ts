@@ -55,6 +55,27 @@ describe('UsersService', () => {
     });
   });
 
+  describe('create', () => {
+    it('creates a user when the email is free', async () => {
+      const created = buildUser();
+      repo.findByEmail.mockResolvedValue(null);
+      repo.create.mockResolvedValue(created);
+
+      const dto = { name: 'John', email: 'john@example.com', password: 'password' };
+      await expect(service.create(dto)).resolves.toBe(created);
+      expect(repo.create).toHaveBeenCalledWith(dto);
+    });
+
+    it('throws ConflictException when the email is taken', async () => {
+      repo.findByEmail.mockResolvedValue(buildUser());
+
+      await expect(
+        service.create({ name: 'John', email: 'john@example.com', password: 'password' }),
+      ).rejects.toThrow(ConflictException);
+      expect(repo.create).not.toHaveBeenCalled();
+    });
+  });
+
   describe('findById', () => {
     it('returns the user when found', async () => {
       const user = buildUser();

@@ -7,6 +7,7 @@ import {
 } from '@nestjs/common';
 import type { IUserRepository } from './interfaces/user-repository.interface';
 import { USER_REPOSITORY } from './interfaces/user-repository.interface';
+import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { User } from './entities/user.entity';
 import { UserRole } from './enums/user-role.enum';
@@ -19,6 +20,13 @@ export class UsersService {
 
   findAll(): Promise<User[]> {
     return this.userRepo.findAll();
+  }
+
+  async create(dto: CreateUserDto): Promise<User> {
+    const existing = await this.userRepo.findByEmail(dto.email);
+    if (existing) throw new ConflictException('Email already in use');
+
+    return this.userRepo.create(dto);
   }
 
   async findById(id: string): Promise<User> {
