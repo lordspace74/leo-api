@@ -69,6 +69,15 @@ describe('JsonApiInterceptor', () => {
     expect((result.data as any).attributes).toMatchObject({ name: 'John', role: UserRole.USER });
   });
 
+  it('passes an already-formed JSON:API document through untouched', async () => {
+    const document = {
+      data: [{ type: 'users', id: '1', attributes: {} }],
+      meta: { total: 1 },
+    };
+
+    await expect(run(document)).resolves.toBe(document);
+  });
+
   it('passes null through untouched (e.g. 204 responses)', async () => {
     await expect(run(null)).resolves.toBeNull();
   });

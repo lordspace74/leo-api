@@ -11,6 +11,7 @@ import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { User } from './entities/user.entity';
 import { UserRole } from './enums/user-role.enum';
+import { Page } from '../common/serializers/json-api.serializer';
 
 @Injectable()
 export class UsersService {
@@ -18,8 +19,9 @@ export class UsersService {
     @Inject(USER_REPOSITORY) private readonly userRepo: IUserRepository,
   ) {}
 
-  findAll(): Promise<User[]> {
-    return this.userRepo.findAll();
+  async findAll(page: number, size: number): Promise<Page<User>> {
+    const [items, total] = await this.userRepo.findAll((page - 1) * size, size);
+    return { items, total, page, size };
   }
 
   async create(dto: CreateUserDto): Promise<User> {

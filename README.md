@@ -153,7 +153,10 @@ curl -X POST http://localhost:3000/auth/login \
 
 ### `GET /users` — _ADMIN only_
 
-Lists all users.
+Lists users with JSON:API page-based pagination
+(`?page[number]=1&page[size]=20`, defaults `1`/`20`, max size `100`). The
+response includes `meta` (`total`, `page`, `size`, `totalPages`) and
+pagination `links` (`self`, `first`, `prev`, `next`, `last`).
 
 ### `POST /users` — _ADMIN only_
 

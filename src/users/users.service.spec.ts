@@ -46,12 +46,17 @@ describe('UsersService', () => {
   });
 
   describe('findAll', () => {
-    it('returns all users', async () => {
+    it('returns a page of users with total and computes the offset', async () => {
       const users = [buildUser(), buildUser({ id: 'user-2' })];
-      repo.findAll.mockResolvedValue(users);
+      repo.findAll.mockResolvedValue([users, 12]);
 
-      await expect(service.findAll()).resolves.toBe(users);
-      expect(repo.findAll).toHaveBeenCalledTimes(1);
+      await expect(service.findAll(3, 5)).resolves.toEqual({
+        items: users,
+        total: 12,
+        page: 3,
+        size: 5,
+      });
+      expect(repo.findAll).toHaveBeenCalledWith(10, 5); // (page-1)*size
     });
   });
 

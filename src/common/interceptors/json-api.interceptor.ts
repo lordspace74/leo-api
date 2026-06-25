@@ -20,6 +20,9 @@ export class JsonApiInterceptor implements NestInterceptor {
       map((data) => {
         if (data === null || data === undefined) return data;
 
+        // Already a JSON:API document (e.g. a paginated collection) — pass through.
+        if (typeof data === 'object' && 'data' in data) return data;
+
         if (Array.isArray(data)) {
           return { data: data.map((item) => toResource(item, this.resourceType)) };
         }

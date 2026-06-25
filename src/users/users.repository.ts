@@ -13,8 +13,12 @@ export class UsersRepository implements IUserRepository {
     @InjectRepository(User) private readonly repo: Repository<User>,
   ) {}
 
-  findAll(): Promise<User[]> {
-    return this.repo.find();
+  findAll(skip: number, take: number): Promise<[User[], number]> {
+    return this.repo.findAndCount({
+      skip,
+      take,
+      order: { created_at: 'ASC' },
+    });
   }
 
   findById(id: string): Promise<User | null> {

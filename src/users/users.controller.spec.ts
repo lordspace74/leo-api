@@ -40,11 +40,25 @@ describe('UsersController', () => {
   });
 
   describe('findAll', () => {
-    it('delegates to the service', async () => {
-      const users = [buildUser()];
-      service.findAll.mockResolvedValue(users);
+    it('returns a paginated JSON:API collection document', async () => {
+      const users = [buildUser(), buildUser({ id: 'user-2' })];
+      service.findAll.mockResolvedValue({ items: users, total: 2, page: 1, size: 20 });
 
-      await expect(controller.findAll()).resolves.toBe(users);
+      const result = await controller.findAll({});
+
+      expect(service.findAll).toHaveBeenCalledWith(1, 20); // defaults
+      expect(Array.isArray(result.data)).toBe(true);
+      expect(result.data).toHaveLength(2);
+      expect(result.meta).toMatchObject({ total: 2, page: 1, size: 20, totalPages: 1 });
+      expect(result.links).toHaveProperty('self');
+    });
+
+    it('honours page[number] and page[size] params', async () => {
+      service.findAll.mockResolvedValue({ items: [], total: 0, page: 2, size: 5 });
+
+      await controller.findAll({ page: { number: 2, size: 5 } });
+
+      expect(service.findAll).toHaveBeenCalledWith(2, 5);
     });
   });
 

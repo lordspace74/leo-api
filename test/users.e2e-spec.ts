@@ -143,13 +143,21 @@ describe('Users API (e2e)', () => {
   });
 
   describe('ADMIN operations', () => {
-    it('lists all users (200)', async () => {
+    it('lists all users with pagination meta and links (200)', async () => {
       const res = await request(http)
-        .get('/users')
+        .get('/users?page[number]=1&page[size]=10')
         .set('Authorization', `Bearer ${adminToken}`)
         .expect(200);
       expect(Array.isArray(res.body.data)).toBe(true);
+      expect(res.body.meta).toMatchObject({ page: 1, size: 10 });
+      expect(res.body.links).toHaveProperty('self');
     });
+
+    it('rejects an invalid page size (400)', () =>
+      request(http)
+        .get('/users?page[size]=0')
+        .set('Authorization', `Bearer ${adminToken}`)
+        .expect(400));
 
     it('creates a user (201)', () =>
       request(http)

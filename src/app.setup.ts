@@ -8,6 +8,13 @@ import { JsonApiHeaderInterceptor } from './common/interceptors/json-api-header.
  * exercise an identically configured application.
  */
 export function configureApp(app: INestApplication): void {
+  // Express 5 defaults to the "simple" query parser, which does not parse
+  // JSON:API bracket syntax (page[number]) into nested objects.
+  const httpInstance = app.getHttpAdapter().getInstance();
+  if (typeof httpInstance.set === 'function') {
+    httpInstance.set('query parser', 'extended');
+  }
+
   app.useGlobalPipes(
     new ValidationPipe({
       whitelist: true,
