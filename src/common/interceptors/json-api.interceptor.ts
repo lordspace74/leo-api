@@ -15,19 +15,28 @@ import {
 export class JsonApiInterceptor implements NestInterceptor {
   constructor(private readonly resourceType: string) {}
 
-  intercept(_ctx: ExecutionContext, next: CallHandler): Observable<JsonApiDocument> {
+  intercept(
+    _ctx: ExecutionContext,
+    next: CallHandler,
+  ): Observable<JsonApiDocument | null> {
     return next.handle().pipe(
-      map((data) => {
-        if (data === null || data === undefined) return data;
+      map((value: unknown): JsonApiDocument | null => {
+        if (value === null || value === undefined) return null;
 
         // Already a JSON:API document (e.g. a paginated collection) — pass through.
-        if (typeof data === 'object' && 'data' in data) return data;
-
-        if (Array.isArray(data)) {
-          return { data: data.map((item) => toResource(item, this.resourceType)) };
+        if (typeof value === 'object' && 'data' in value) {
+          return value as JsonApiDocument;
         }
 
-        return { data: toResource(data, this.resourceType) };
+        if (Array.isArray(value)) {
+          return {
+            data: (value as unknown[]).map((item) =>
+              toResource(item as object, this.resourceType),
+            ),
+          };
+        }
+
+        return { data: toResource(value, this.resourceType) };
       }),
     );
   }

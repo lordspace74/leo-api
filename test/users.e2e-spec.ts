@@ -37,7 +37,9 @@ describe('Users API (e2e)', () => {
     http = app.getHttpServer();
 
     // Clean slate, then seed an admin directly through the repository.
-    await app.get(DataSource).query('TRUNCATE TABLE users RESTART IDENTITY CASCADE');
+    await app
+      .get(DataSource)
+      .query('TRUNCATE TABLE users RESTART IDENTITY CASCADE');
     const users = app.get<IUserRepository>(USER_REPOSITORY, { strict: false });
     const admin = await users.create({
       name: 'Admin',
@@ -56,7 +58,9 @@ describe('Users API (e2e)', () => {
     it('registers a USER (201) and returns a JSON:API document', async () => {
       const res = await request(http)
         .post('/auth/register')
-        .send(doc({ name: 'Alice', email: 'alice@e2e.test', password: 'password' }))
+        .send(
+          doc({ name: 'Alice', email: 'alice@e2e.test', password: 'password' }),
+        )
         .expect(201);
 
       expect(res.headers['content-type']).toContain('application/vnd.api+json');
@@ -75,7 +79,9 @@ describe('Users API (e2e)', () => {
     it('rejects a duplicate email (409)', () =>
       request(http)
         .post('/auth/register')
-        .send(doc({ name: 'Dup', email: 'alice@e2e.test', password: 'password' }))
+        .send(
+          doc({ name: 'Dup', email: 'alice@e2e.test', password: 'password' }),
+        )
         .expect(409));
 
     it('rejects invalid attributes (400)', () =>
@@ -163,7 +169,14 @@ describe('Users API (e2e)', () => {
       request(http)
         .post('/users')
         .set('Authorization', `Bearer ${adminToken}`)
-        .send(doc({ name: 'Bob', email: 'bob@e2e.test', password: 'password', role: 'USER' }))
+        .send(
+          doc({
+            name: 'Bob',
+            email: 'bob@e2e.test',
+            password: 'password',
+            role: 'USER',
+          }),
+        )
         .expect(201));
 
     it('updates another user role (200)', () =>

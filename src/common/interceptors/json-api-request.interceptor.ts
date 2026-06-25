@@ -23,8 +23,10 @@ export class JsonApiRequestInterceptor implements NestInterceptor {
   constructor(private readonly resourceType: string) {}
 
   intercept(context: ExecutionContext, next: CallHandler): Observable<unknown> {
-    const request = context.switchToHttp().getRequest();
-    const body = request.body;
+    const request = context.switchToHttp().getRequest<{ body: unknown }>();
+    const body = request.body as
+      | { data?: { type?: string; attributes?: Record<string, unknown> } }
+      | undefined;
 
     const data = body?.data;
     if (!data || typeof data !== 'object') {

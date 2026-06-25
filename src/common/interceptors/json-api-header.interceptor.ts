@@ -16,8 +16,12 @@ import { Response } from 'express';
 export class JsonApiHeaderInterceptor implements NestInterceptor {
   intercept(context: ExecutionContext, next: CallHandler): Observable<unknown> {
     const response = context.switchToHttp().getResponse<Response>();
-    return next.handle().pipe(
-      tap(() => response.setHeader('Content-Type', 'application/vnd.api+json')),
-    );
+    return next
+      .handle()
+      .pipe(
+        tap(() =>
+          response.setHeader('Content-Type', 'application/vnd.api+json'),
+        ),
+      );
   }
 }

@@ -98,7 +98,10 @@ describe('AuthService', () => {
         password: 'password',
       });
 
-      expect(jwt.sign).toHaveBeenCalledWith({ sub: user.id, email: user.email });
+      expect(jwt.sign).toHaveBeenCalledWith({
+        sub: user.id,
+        email: user.email,
+      });
       expect(result.accessToken).toBe('signed-token');
       expect(result.user).toBe(user);
       expect(repo.save).not.toHaveBeenCalled();

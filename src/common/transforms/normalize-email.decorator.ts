@@ -5,6 +5,6 @@ import { Transform } from 'class-transformer';
  * unique constraint treat `Alice@Example.com` and `alice@example.com` alike.
  */
 export const NormalizeEmail = () =>
-  Transform(({ value }) =>
+  Transform(({ value }: { value: unknown }) =>
     typeof value === 'string' ? value.trim().toLowerCase() : value,
   );

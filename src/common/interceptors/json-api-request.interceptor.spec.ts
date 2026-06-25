@@ -26,7 +26,10 @@ describe('JsonApiRequestInterceptor', () => {
 
     interceptor.intercept(ctx, next);
 
-    expect((ctx as any).__request.body).toEqual({ name: 'John', email: 'j@x.com' });
+    expect((ctx as any).__request.body).toEqual({
+      name: 'John',
+      email: 'j@x.com',
+    });
   });
 
   it('rejects a body without a data member (400)', () => {

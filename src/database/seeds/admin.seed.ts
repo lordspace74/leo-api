@@ -30,7 +30,9 @@ async function seedAdmin(): Promise<void> {
 
     const existing = await users.findByEmail(email);
     if (existing) {
-      logger.log(`Admin already exists: ${email} (id=${existing.id}) — nothing to do.`);
+      logger.log(
+        `Admin already exists: ${email} (id=${existing.id}) — nothing to do.`,
+      );
       return;
     }
 

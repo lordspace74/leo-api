@@ -42,19 +42,34 @@ describe('UsersController', () => {
   describe('findAll', () => {
     it('returns a paginated JSON:API collection document', async () => {
       const users = [buildUser(), buildUser({ id: 'user-2' })];
-      service.findAll.mockResolvedValue({ items: users, total: 2, page: 1, size: 20 });
+      service.findAll.mockResolvedValue({
+        items: users,
+        total: 2,
+        page: 1,
+        size: 20,
+      });
 
       const result = await controller.findAll({});
 
       expect(service.findAll).toHaveBeenCalledWith(1, 20); // defaults
       expect(Array.isArray(result.data)).toBe(true);
       expect(result.data).toHaveLength(2);
-      expect(result.meta).toMatchObject({ total: 2, page: 1, size: 20, totalPages: 1 });
+      expect(result.meta).toMatchObject({
+        total: 2,
+        page: 1,
+        size: 20,
+        totalPages: 1,
+      });
       expect(result.links).toHaveProperty('self');
     });
 
     it('honours page[number] and page[size] params', async () => {
-      service.findAll.mockResolvedValue({ items: [], total: 0, page: 2, size: 5 });
+      service.findAll.mockResolvedValue({
+        items: [],
+        total: 0,
+        page: 2,
+        size: 5,
+      });
 
       await controller.findAll({ page: { number: 2, size: 5 } });
 
@@ -66,7 +81,11 @@ describe('UsersController', () => {
     it('delegates to the service', async () => {
       const created = buildUser();
       service.create.mockResolvedValue(created);
-      const dto = { name: 'John', email: 'john@example.com', password: 'password' };
+      const dto = {
+        name: 'John',
+        email: 'john@example.com',
+        password: 'password',
+      };
 
       await expect(controller.create(dto)).resolves.toBe(created);
       expect(service.create).toHaveBeenCalledWith(dto);
@@ -89,8 +108,12 @@ describe('UsersController', () => {
       const updated = buildUser({ name: 'Jane' });
       service.update.mockResolvedValue(updated);
 
-      await expect(controller.update(user.id, { name: 'Jane' }, user)).resolves.toBe(updated);
-      expect(service.update).toHaveBeenCalledWith(user, user.id, { name: 'Jane' });
+      await expect(
+        controller.update(user.id, { name: 'Jane' }, user),
+      ).resolves.toBe(updated);
+      expect(service.update).toHaveBeenCalledWith(user, user.id, {
+        name: 'Jane',
+      });
     });
   });
 

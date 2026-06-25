@@ -20,7 +20,7 @@ export class JsonApiExceptionFilter implements ExceptionFilter {
     const response = host.switchToHttp().getResponse<Response>();
     const { status, detail } = this.resolve(exception);
 
-    if (status >= HttpStatus.INTERNAL_SERVER_ERROR) {
+    if (status >= Number(HttpStatus.INTERNAL_SERVER_ERROR)) {
       this.logger.error(exception);
     }
 
@@ -43,8 +43,8 @@ export class JsonApiExceptionFilter implements ExceptionFilter {
       const detail =
         typeof res === 'string'
           ? res
-          : ((res as Record<string, unknown>)?.message as string | string[]) ??
-            exception.message;
+          : (((res as Record<string, unknown>)?.message as string | string[]) ??
+            exception.message);
       return { status: exception.getStatus(), detail };
     }
 

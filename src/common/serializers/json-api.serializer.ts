@@ -29,7 +29,8 @@ export function toCollection<T extends object>(
   path: string,
 ): JsonApiDocument {
   const totalPages = Math.max(1, Math.ceil(page.total / page.size));
-  const link = (n: number) => `${path}?page[number]=${n}&page[size]=${page.size}`;
+  const link = (n: number) =>
+    `${path}?page[number]=${n}&page[size]=${page.size}`;
 
   return {
     data: page.items.map((item) => toResource(item, type)),

@@ -41,7 +41,10 @@ describe('JsonApiExceptionFilter', () => {
     const { host, status, json } = buildHost();
 
     filter.catch(
-      new BadRequestException(['email must be an email', 'name should not be empty']),
+      new BadRequestException([
+        'email must be an email',
+        'name should not be empty',
+      ]),
       host,
     );
 
@@ -72,7 +75,10 @@ describe('JsonApiExceptionFilter', () => {
 
     filter.catch(new NotFoundException('nope'), host);
 
-    expect(setHeader).toHaveBeenCalledWith('Content-Type', 'application/vnd.api+json');
+    expect(setHeader).toHaveBeenCalledWith(
+      'Content-Type',
+      'application/vnd.api+json',
+    );
   });
 
   it('falls back to 500 for unknown errors', () => {

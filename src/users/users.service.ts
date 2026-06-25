@@ -44,7 +44,11 @@ export class UsersService {
     return user;
   }
 
-  async update(requestingUser: User, targetId: string, dto: UpdateUserDto): Promise<User> {
+  async update(
+    requestingUser: User,
+    targetId: string,
+    dto: UpdateUserDto,
+  ): Promise<User> {
     const isAdmin = requestingUser.role === UserRole.ADMIN;
     const isSelf = requestingUser.id === targetId;
 

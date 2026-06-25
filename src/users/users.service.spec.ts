@@ -5,7 +5,10 @@ import {
   ConflictException,
 } from '@nestjs/common';
 import { UsersService } from './users.service';
-import { IUserRepository, USER_REPOSITORY } from './interfaces/user-repository.interface';
+import {
+  IUserRepository,
+  USER_REPOSITORY,
+} from './interfaces/user-repository.interface';
 import { User } from './entities/user.entity';
 import { UserRole } from './enums/user-role.enum';
 
@@ -66,7 +69,11 @@ describe('UsersService', () => {
       repo.findByEmail.mockResolvedValue(null);
       repo.create.mockResolvedValue(created);
 
-      const dto = { name: 'John', email: 'john@example.com', password: 'password' };
+      const dto = {
+        name: 'John',
+        email: 'john@example.com',
+        password: 'password',
+      };
       await expect(service.create(dto)).resolves.toBe(created);
       expect(repo.create).toHaveBeenCalledWith(dto);
     });
@@ -75,7 +82,11 @@ describe('UsersService', () => {
       repo.findByEmail.mockResolvedValue(buildUser());
 
       await expect(
-        service.create({ name: 'John', email: 'john@example.com', password: 'password' }),
+        service.create({
+          name: 'John',
+          email: 'john@example.com',
+          password: 'password',
+        }),
       ).rejects.toThrow(ConflictException);
       expect(repo.create).not.toHaveBeenCalled();
     });
@@ -100,7 +111,9 @@ describe('UsersService', () => {
     it('forbids a user from viewing another account', async () => {
       const user = buildUser();
 
-      await expect(service.findById(user, 'user-2')).rejects.toThrow(ForbiddenException);
+      await expect(service.findById(user, 'user-2')).rejects.toThrow(
+        ForbiddenException,
+      );
       expect(repo.findById).not.toHaveBeenCalled();
     });
 
@@ -108,7 +121,9 @@ describe('UsersService', () => {
       const admin = buildUser({ id: 'admin-1', role: UserRole.ADMIN });
       repo.findById.mockResolvedValue(null);
 
-      await expect(service.findById(admin, 'missing')).rejects.toThrow(NotFoundException);
+      await expect(service.findById(admin, 'missing')).rejects.toThrow(
+        NotFoundException,
+      );
     });
   });
 
@@ -118,7 +133,9 @@ describe('UsersService', () => {
       const updated = buildUser({ name: 'Jane' });
       repo.update.mockResolvedValue(updated);
 
-      await expect(service.update(user, user.id, { name: 'Jane' })).resolves.toBe(updated);
+      await expect(
+        service.update(user, user.id, { name: 'Jane' }),
+      ).resolves.toBe(updated);
       expect(repo.update).toHaveBeenCalledWith(user.id, { name: 'Jane' });
     });
 
@@ -203,7 +220,9 @@ describe('UsersService', () => {
     it('forbids any user from deleting themselves', async () => {
       const admin = buildUser({ id: 'admin-1', role: UserRole.ADMIN });
 
-      await expect(service.delete(admin, admin.id)).rejects.toThrow(ForbiddenException);
+      await expect(service.delete(admin, admin.id)).rejects.toThrow(
+        ForbiddenException,
+      );
       expect(repo.delete).not.toHaveBeenCalled();
     });
 
@@ -211,7 +230,9 @@ describe('UsersService', () => {
       const admin = buildUser({ id: 'admin-1', role: UserRole.ADMIN });
       repo.findById.mockResolvedValue(null);
 
-      await expect(service.delete(admin, 'missing')).rejects.toThrow(NotFoundException);
+      await expect(service.delete(admin, 'missing')).rejects.toThrow(
+        NotFoundException,
+      );
       expect(repo.delete).not.toHaveBeenCalled();
     });
   });

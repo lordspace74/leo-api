@@ -6,13 +6,17 @@ import { User } from '../../users/entities/user.entity';
 import { UserRole } from '../../users/enums/user-role.enum';
 
 const ctx = {} as ExecutionContext;
-const handlerOf = (value: unknown): CallHandler => ({ handle: () => of(value) });
+const handlerOf = (value: unknown): CallHandler => ({
+  handle: () => of(value),
+});
 
 describe('JsonApiInterceptor', () => {
   const interceptor = new JsonApiInterceptor('users');
 
   const run = (value: unknown) =>
-    lastValueFrom(interceptor.intercept(ctx, handlerOf(value)) as any) as Promise<JsonApiDocument>;
+    lastValueFrom(
+      interceptor.intercept(ctx, handlerOf(value)),
+    ) as Promise<JsonApiDocument>;
 
   it('wraps a single resource with type, id and attributes', async () => {
     const result = await run({
@@ -51,7 +55,10 @@ describe('JsonApiInterceptor', () => {
 
     expect(Array.isArray(result.data)).toBe(true);
     expect(result.data).toHaveLength(2);
-    expect((result.data as any)[1]).toMatchObject({ type: 'users', id: 'user-2' });
+    expect((result.data as any)[1]).toMatchObject({
+      type: 'users',
+      id: 'user-2',
+    });
   });
 
   it('strips @Exclude fields such as password from a User entity', async () => {
@@ -66,7 +73,10 @@ describe('JsonApiInterceptor', () => {
     const result = await run(user);
 
     expect((result.data as any).attributes).not.toHaveProperty('password');
-    expect((result.data as any).attributes).toMatchObject({ name: 'John', role: UserRole.USER });
+    expect((result.data as any).attributes).toMatchObject({
+      name: 'John',
+      role: UserRole.USER,
+    });
   });
 
   it('passes an already-formed JSON:API document through untouched', async () => {
