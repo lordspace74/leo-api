@@ -26,9 +26,6 @@ export class User {
   @Column({ type: 'enum', enum: UserRole, default: UserRole.USER })
   role: UserRole;
 
-  @Column({ nullable: true, type: 'text' })
-  access_token: string | null;
-
   @CreateDateColumn()
   created_at: Date;
 

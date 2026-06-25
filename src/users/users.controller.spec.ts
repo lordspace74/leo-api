@@ -11,7 +11,6 @@ const buildUser = (overrides: Partial<User> = {}): User => ({
   email: 'john@example.com',
   password: 'hashed',
   role: UserRole.USER,
-  access_token: null,
   created_at: new Date(),
   updated_at: new Date(),
   ...overrides,

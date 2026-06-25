@@ -6,25 +6,10 @@ import {
 } from '@nestjs/common';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
-
-export interface JsonApiDocument {
-  data: JsonApiResource | JsonApiResource[];
-}
-
-export interface JsonApiResource {
-  type: string;
-  id: string;
-  attributes: Record<string, unknown>;
-}
-
-function serialize(resource: Record<string, unknown>, type: string): JsonApiResource {
-  const { id, created_at, updated_at, ...attributes } = resource;
-  return {
-    type,
-    id: id as string,
-    attributes: { ...attributes, created_at, updated_at },
-  };
-}
+import {
+  JsonApiDocument,
+  toResource,
+} from '../serializers/json-api.serializer';
 
 @Injectable()
 export class JsonApiInterceptor implements NestInterceptor {
@@ -36,10 +21,10 @@ export class JsonApiInterceptor implements NestInterceptor {
         if (data === null || data === undefined) return data;
 
         if (Array.isArray(data)) {
-          return { data: data.map((item) => serialize(item, this.resourceType)) };
+          return { data: data.map((item) => toResource(item, this.resourceType)) };
         }
 
-        return { data: serialize(data as Record<string, unknown>, this.resourceType) };
+        return { data: toResource(data, this.resourceType) };
       }),
     );
   }

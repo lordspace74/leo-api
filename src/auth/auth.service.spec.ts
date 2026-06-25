@@ -18,7 +18,6 @@ const buildUser = (overrides: Partial<User> = {}): User => ({
   email: 'john@example.com',
   password: 'hashed',
   role: UserRole.USER,
-  access_token: null,
   created_at: new Date(),
   updated_at: new Date(),
   ...overrides,
@@ -88,12 +87,11 @@ describe('AuthService', () => {
   });
 
   describe('login', () => {
-    it('issues a token and stores it on the user', async () => {
+    it('issues a token without persisting it', async () => {
       const user = buildUser();
       repo.findOne.mockResolvedValue(user);
       mockedBcrypt.compare.mockResolvedValue(true as never);
       jwt.sign.mockReturnValue('signed-token');
-      repo.save.mockImplementation(async (u) => u as User);
 
       const result = await service.login({
         email: 'john@example.com',
@@ -101,7 +99,9 @@ describe('AuthService', () => {
       });
 
       expect(jwt.sign).toHaveBeenCalledWith({ sub: user.id, email: user.email });
-      expect(result.access_token).toBe('signed-token');
+      expect(result.accessToken).toBe('signed-token');
+      expect(result.user).toBe(user);
+      expect(repo.save).not.toHaveBeenCalled();
     });
 
     it('throws UnauthorizedException when the user is not found', async () => {
