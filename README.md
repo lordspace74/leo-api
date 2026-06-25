@@ -90,8 +90,15 @@ ADMIN_EMAIL=you@example.com ADMIN_PASSWORD=supersecret npm run seed:admin
 
 ```bash
 npm test              # run unit tests
-npm run test:cov      # run with coverage
+npm run test:cov      # run unit tests with coverage
+npm run test:e2e      # run end-to-end tests
 ```
+
+Unit tests are fully mocked and need no database. The e2e suite boots the real
+application and talks to an isolated database (`leo_api_test` by default,
+overridable via `DB_DATABASE_TEST`); create it once with
+`createdb leo_api_test` (or let TypeORM's `synchronize` build the schema on
+first run).
 
 ## API reference
 
