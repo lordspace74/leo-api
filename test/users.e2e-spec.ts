@@ -179,17 +179,25 @@ describe('Users API (e2e)', () => {
         )
         .expect(201));
 
-    it('updates another user role (200)', () =>
-      request(http)
+    it('updates another user role (200)', async () => {
+      const current = await request(http)
+        .get(`/users/${aliceId}`)
+        .set('Authorization', `Bearer ${adminToken}`)
+        .expect(200);
+
+      await request(http)
         .patch(`/users/${aliceId}`)
         .set('Authorization', `Bearer ${adminToken}`)
+        .set('If-Match', current.headers['etag'])
         .send(doc({ role: 'ADMIN' }))
-        .expect(200));
+        .expect(200);
+    });
 
     it('returns 404 updating a non-existent user', () =>
       request(http)
         .patch(`/users/${NONEXISTENT_ID}`)
         .set('Authorization', `Bearer ${adminToken}`)
+        .set('If-Match', '*')
         .send(doc({ name: 'Ghost' }))
         .expect(404));
 
@@ -199,16 +207,100 @@ describe('Users API (e2e)', () => {
         .set('Authorization', `Bearer ${adminToken}`)
         .expect(403));
 
-    it('deletes another user (204)', () =>
-      request(http)
+    it('deletes another user (204)', async () => {
+      const current = await request(http)
+        .get(`/users/${aliceId}`)
+        .set('Authorization', `Bearer ${adminToken}`)
+        .expect(200);
+
+      await request(http)
         .delete(`/users/${aliceId}`)
         .set('Authorization', `Bearer ${adminToken}`)
-        .expect(204));
+        .set('If-Match', current.headers['etag'])
+        .expect(204);
+    });
 
     it('returns 404 deleting an already-deleted user', () =>
       request(http)
         .delete(`/users/${aliceId}`)
         .set('Authorization', `Bearer ${adminToken}`)
         .expect(404));
+  });
+
+  describe('conditional requests (ETag)', () => {
+    let id: string;
+    let etag: string;
+
+    it('creates a target and returns a strong ETag (201)', async () => {
+      const res = await request(http)
+        .post('/users')
+        .set('Authorization', `Bearer ${adminToken}`)
+        .send(
+          doc({ name: 'Etag', email: 'etag@e2e.test', password: 'password' }),
+        )
+        .expect(201);
+
+      expect(res.headers['etag']).toBeDefined();
+      expect(res.headers['etag']).toMatch(/^"/); // strong validator, not weak (W/)
+      id = res.body.data.id;
+      etag = res.headers['etag'];
+    });
+
+    it('echoes the ETag on a read and returns 304 when If-None-Match matches', async () => {
+      const read = await request(http)
+        .get(`/users/${id}`)
+        .set('Authorization', `Bearer ${adminToken}`)
+        .expect(200);
+      expect(read.headers['etag']).toBe(etag);
+
+      await request(http)
+        .get(`/users/${id}`)
+        .set('Authorization', `Bearer ${adminToken}`)
+        .set('If-None-Match', etag)
+        .expect(304);
+    });
+
+    it('rejects a write without If-Match (428)', () =>
+      request(http)
+        .patch(`/users/${id}`)
+        .set('Authorization', `Bearer ${adminToken}`)
+        .send(doc({ name: 'NoPrecondition' }))
+        .expect(428));
+
+    it('rejects a write with a stale If-Match (412)', () =>
+      request(http)
+        .patch(`/users/${id}`)
+        .set('Authorization', `Bearer ${adminToken}`)
+        .set('If-Match', '"stale-version"')
+        .send(doc({ name: 'Stale' }))
+        .expect(412));
+
+    it('updates with the correct If-Match and returns a fresh ETag (200)', async () => {
+      const res = await request(http)
+        .patch(`/users/${id}`)
+        .set('Authorization', `Bearer ${adminToken}`)
+        .set('If-Match', etag)
+        .send(doc({ name: 'Renamed' }))
+        .expect(200);
+
+      expect(res.body.data.attributes.name).toBe('Renamed');
+      expect(res.headers['etag']).toBeDefined();
+      expect(res.headers['etag']).not.toBe(etag); // version advanced
+      etag = res.headers['etag'];
+    });
+
+    it('rejects deletion with the now-stale original tag, then deletes with the fresh one', async () => {
+      await request(http)
+        .delete(`/users/${id}`)
+        .set('Authorization', `Bearer ${adminToken}`)
+        .set('If-Match', '"stale-version"')
+        .expect(412);
+
+      await request(http)
+        .delete(`/users/${id}`)
+        .set('Authorization', `Bearer ${adminToken}`)
+        .set('If-Match', etag)
+        .expect(204);
+    });
   });
 });

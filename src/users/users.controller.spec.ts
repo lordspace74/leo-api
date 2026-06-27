@@ -103,27 +103,30 @@ describe('UsersController', () => {
   });
 
   describe('update', () => {
-    it('passes the requesting user through to the service', async () => {
+    it('passes the requesting user and If-Match through to the service', async () => {
       const user = buildUser();
       const updated = buildUser({ name: 'Jane' });
       service.update.mockResolvedValue(updated);
 
       await expect(
-        controller.update(user.id, { name: 'Jane' }, user),
+        controller.update(user.id, { name: 'Jane' }, user, '"etag-1"'),
       ).resolves.toBe(updated);
-      expect(service.update).toHaveBeenCalledWith(user, user.id, {
-        name: 'Jane',
-      });
+      expect(service.update).toHaveBeenCalledWith(
+        user,
+        user.id,
+        { name: 'Jane' },
+        '"etag-1"',
+      );
     });
   });
 
   describe('delete', () => {
-    it('passes the requesting user through to the service', async () => {
+    it('passes the requesting user and If-Match through to the service', async () => {
       const admin = buildUser({ id: 'admin-1', role: UserRole.ADMIN });
       service.delete.mockResolvedValue(undefined);
 
-      await controller.delete('user-2', admin);
-      expect(service.delete).toHaveBeenCalledWith(admin, 'user-2');
+      await controller.delete('user-2', admin, '"etag-1"');
+      expect(service.delete).toHaveBeenCalledWith(admin, 'user-2', '"etag-1"');
     });
   });
 });

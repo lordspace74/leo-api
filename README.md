@@ -11,6 +11,7 @@ A RESTful API for managing users with role-based access control, built with
 - Request validation with `class-validator`
 - JSON:API-compliant responses and error objects
 - OpenAPI 3 spec + Swagger UI (kept in sync by a test)
+- ETag caching (`304`) and optimistic concurrency (`If-Match` → `412`/`428`)
 - Layered architecture (controller → service → repository) following SOLID
 
 ## Authorization rules
@@ -211,7 +212,46 @@ curl -X PATCH http://localhost:3000/users/<id> \
 ### `DELETE /users/:id` — _ADMIN only_
 
 Deletes a user. Responds `204 No Content`. No user (including an admin) may
-delete themselves.
+delete themselves. Requires `If-Match` (see below).
+
+## Caching & concurrency (ETags)
+
+Single-resource responses (`GET`/`POST`/`PATCH /users/:id` and
+`POST /auth/register`) carry a strong `ETag` derived from the resource version
+(`updated_at`):
+
+```
+ETag: "8f1c…-1719446400000"
+```
+
+**Conditional reads.** Send the tag back as `If-None-Match`; if the resource is
+unchanged the API replies `304 Not Modified` with no body:
+
+```bash
+curl -i http://localhost:3000/users/<id> \
+  -H "Authorization: Bearer <token>" \
+  -H 'If-None-Match: "8f1c…-1719446400000"'      # -> 304
+```
+
+**Optimistic concurrency.** Writes (`PATCH`/`DELETE`) **require** `If-Match` so
+two clients can't silently overwrite each other (lost-update problem):
+
+```bash
+curl -X PATCH http://localhost:3000/users/<id> \
+  -H "Authorization: Bearer <token>" \
+  -H 'If-Match: "8f1c…-1719446400000"' \
+  -H 'Content-Type: application/json' \
+  -d '{"data":{"type":"users","attributes":{"name":"New Name"}}}'
+```
+
+| Condition                          | Response |
+| ---------------------------------- | -------- |
+| `If-Match` omitted                 | `428 Precondition Required` |
+| `If-Match` stale (resource moved)  | `412 Precondition Failed` |
+| `If-Match` current                 | `200` with a refreshed `ETag` |
+
+Read the resource (or reuse the `ETag` from the previous write response) to get
+the current tag before retrying.
 
 ## Design notes
 
@@ -228,6 +268,11 @@ delete themselves.
   document envelope by an interceptor, so the DTOs stay flat and reusable.
 - **Serialization** runs through `class-transformer`, so `@Exclude`-marked
   fields such as `password` never reach the response.
+- **ETags as version validators.** The `ETag` is derived from `updated_at`
+  rather than hashing the body, so it doubles as an optimistic-locking token:
+  `If-Match` is enforced on writes (the service compares the tag before
+  persisting), and `If-None-Match` lets Express short-circuit unchanged reads
+  with `304`.
 - **Dependency overrides.** `multer` and `js-yaml` are pinned via npm
   `overrides` to patched versions to clear transitive security advisories
   without downgrading framework majors; `npm audit` reports 0 vulnerabilities.

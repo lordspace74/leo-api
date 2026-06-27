@@ -178,6 +178,14 @@
         "responses": {
           "201": {
             "description": "The created user",
+            "headers": {
+              "ETag": {
+                "description": "Strong validator for this resource version. Echo it back in `If-Match` on a later write.",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
             "content": {
               "application/vnd.api+json": {
                 "schema": {
@@ -278,11 +286,28 @@
               "format": "uuid",
               "type": "string"
             }
+          },
+          {
+            "name": "If-None-Match",
+            "in": "header",
+            "description": "A previously returned `ETag`. The server replies `304 Not Modified` if it still matches.",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
           }
         ],
         "responses": {
           "200": {
             "description": "The requested user",
+            "headers": {
+              "ETag": {
+                "description": "Strong validator for this resource version. Echo it back in `If-Match` on a later write.",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
             "content": {
               "application/vnd.api+json": {
                 "schema": {
@@ -315,6 +340,17 @@
                       }
                     }
                   }
+                }
+              }
+            }
+          },
+          "304": {
+            "description": "The resource is unchanged since the supplied `If-None-Match`.",
+            "headers": {
+              "ETag": {
+                "description": "Strong validator for this resource version. Echo it back in `If-Match` on a later write.",
+                "schema": {
+                  "type": "string"
                 }
               }
             }
@@ -381,6 +417,15 @@
               "format": "uuid",
               "type": "string"
             }
+          },
+          {
+            "name": "If-Match",
+            "in": "header",
+            "description": "Current resource `ETag`. Omitting it fails with `428`; a stale value fails with `412`.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
           }
         ],
         "requestBody": {
@@ -419,6 +464,14 @@
         "responses": {
           "200": {
             "description": "The updated user",
+            "headers": {
+              "ETag": {
+                "description": "Strong validator for this resource version. Echo it back in `If-Match` on a later write.",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
             "content": {
               "application/vnd.api+json": {
                 "schema": {
@@ -504,6 +557,26 @@
                 }
               }
             }
+          },
+          "412": {
+            "description": "The If-Match ETag is stale; re-read and retry",
+            "content": {
+              "application/vnd.api+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/JsonApiErrorDocument"
+                }
+              }
+            }
+          },
+          "428": {
+            "description": "An If-Match header is required",
+            "content": {
+              "application/vnd.api+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/JsonApiErrorDocument"
+                }
+              }
+            }
           }
         },
         "security": [
@@ -525,6 +598,15 @@
             "in": "path",
             "schema": {
               "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "name": "If-Match",
+            "in": "header",
+            "description": "Current resource `ETag`. Omitting it fails with `428`; a stale value fails with `412`.",
+            "required": true,
+            "schema": {
               "type": "string"
             }
           }
@@ -555,6 +637,26 @@
           },
           "404": {
             "description": "User not found",
+            "content": {
+              "application/vnd.api+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/JsonApiErrorDocument"
+                }
+              }
+            }
+          },
+          "412": {
+            "description": "The If-Match ETag is stale; re-read and retry",
+            "content": {
+              "application/vnd.api+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/JsonApiErrorDocument"
+                }
+              }
+            }
+          },
+          "428": {
+            "description": "An If-Match header is required",
             "content": {
               "application/vnd.api+json": {
                 "schema": {
@@ -615,6 +717,14 @@
         "responses": {
           "201": {
             "description": "The created user",
+            "headers": {
+              "ETag": {
+                "description": "Strong validator for this resource version. Echo it back in `If-Match` on a later write.",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
             "content": {
               "application/vnd.api+json": {
                 "schema": {

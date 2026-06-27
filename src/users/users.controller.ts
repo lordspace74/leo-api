@@ -34,16 +34,22 @@ import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../common/guards/roles.guard';
 import { Roles } from '../common/decorators/roles.decorator';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
+import { IfMatch } from '../common/decorators/if-match.decorator';
 import { JsonApiInterceptor } from '../common/interceptors/json-api.interceptor';
+import { EtagInterceptor } from '../common/interceptors/etag.interceptor';
 import { JsonApiRequestInterceptor } from '../common/interceptors/json-api-request.interceptor';
 import {
   JsonApiDocument,
   toCollection,
 } from '../common/serializers/json-api.serializer';
 import {
+  ApiIfMatchHeader,
+  ApiIfNoneMatchHeader,
   ApiJsonApiBody,
   ApiJsonApiError,
   ApiJsonApiResponse,
+  ApiNotModifiedResponse,
+  ETAG_RESPONSE_HEADERS,
   JSON_API_MODELS,
   jsonApiCollectionSchema,
   jsonApiResourceSchema,
@@ -62,7 +68,7 @@ const DEFAULT_SIZE = 20;
 @ApiJsonApiError(403, 'The authenticated user may not perform this action')
 @Controller('users')
 @UseGuards(JwtAuthGuard, RolesGuard)
-@UseInterceptors(new JsonApiInterceptor('users'))
+@UseInterceptors(new JsonApiInterceptor('users'), new EtagInterceptor())
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}
 
@@ -101,6 +107,7 @@ export class UsersController {
     201,
     jsonApiResourceSchema('users', UserResourceAttributes),
     'The created user',
+    ETAG_RESPONSE_HEADERS,
   )
   @ApiJsonApiError(400, 'Malformed body or invalid attributes')
   @ApiJsonApiError(409, 'Wrong resource type or duplicate email')
@@ -111,11 +118,14 @@ export class UsersController {
   @Get(':id')
   @ApiOperation({ summary: 'Get a user by id' })
   @ApiParam({ name: 'id', format: 'uuid' })
+  @ApiIfNoneMatchHeader()
   @ApiJsonApiResponse(
     200,
     jsonApiResourceSchema('users', UserResourceAttributes),
     'The requested user',
+    ETAG_RESPONSE_HEADERS,
   )
+  @ApiNotModifiedResponse()
   @ApiJsonApiError(400, 'Malformed id')
   @ApiJsonApiError(404, 'User not found')
   findOne(@Param('id', ParseUUIDPipe) id: string, @CurrentUser() user: User) {
@@ -126,21 +136,26 @@ export class UsersController {
   @UseInterceptors(new JsonApiRequestInterceptor('users'))
   @ApiOperation({ summary: 'Update a user' })
   @ApiParam({ name: 'id', format: 'uuid' })
+  @ApiIfMatchHeader()
   @ApiJsonApiBody('users', UpdateUserDto)
   @ApiJsonApiResponse(
     200,
     jsonApiResourceSchema('users', UserResourceAttributes),
     'The updated user',
+    ETAG_RESPONSE_HEADERS,
   )
   @ApiJsonApiError(400, 'Malformed id, body, or invalid attributes')
   @ApiJsonApiError(404, 'User not found')
   @ApiJsonApiError(409, 'Wrong resource type or duplicate email')
+  @ApiJsonApiError(412, 'The If-Match ETag is stale; re-read and retry')
+  @ApiJsonApiError(428, 'An If-Match header is required')
   update(
     @Param('id', ParseUUIDPipe) id: string,
     @Body() dto: UpdateUserDto,
     @CurrentUser() user: User,
+    @IfMatch() ifMatch: string | undefined,
   ) {
-    return this.usersService.update(user, id, dto);
+    return this.usersService.update(user, id, dto, ifMatch);
   }
 
   @Delete(':id')
@@ -148,9 +163,16 @@ export class UsersController {
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiOperation({ summary: 'Delete a user (ADMIN only)' })
   @ApiParam({ name: 'id', format: 'uuid' })
+  @ApiIfMatchHeader()
   @ApiNoContentResponse({ description: 'The user was deleted' })
   @ApiJsonApiError(404, 'User not found')
-  delete(@Param('id', ParseUUIDPipe) id: string, @CurrentUser() user: User) {
-    return this.usersService.delete(user, id);
+  @ApiJsonApiError(412, 'The If-Match ETag is stale; re-read and retry')
+  @ApiJsonApiError(428, 'An If-Match header is required')
+  delete(
+    @Param('id', ParseUUIDPipe) id: string,
+    @CurrentUser() user: User,
+    @IfMatch() ifMatch: string | undefined,
+  ) {
+    return this.usersService.delete(user, id, ifMatch);
   }
 }

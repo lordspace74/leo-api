@@ -16,6 +16,7 @@ import { AuthService } from './auth.service';
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
 import { JsonApiInterceptor } from '../common/interceptors/json-api.interceptor';
+import { EtagInterceptor } from '../common/interceptors/etag.interceptor';
 import { JsonApiRequestInterceptor } from '../common/interceptors/json-api-request.interceptor';
 import {
   JsonApiDocument,
@@ -25,6 +26,7 @@ import {
   ApiJsonApiBody,
   ApiJsonApiError,
   ApiJsonApiResponse,
+  ETAG_RESPONSE_HEADERS,
   JSON_API_MODELS,
   jsonApiResourceSchema,
   UserResourceAttributes,
@@ -40,6 +42,7 @@ export class AuthController {
   @UseInterceptors(
     new JsonApiRequestInterceptor('users'),
     new JsonApiInterceptor('users'),
+    new EtagInterceptor(),
   )
   @ApiOperation({ summary: 'Register a new USER account' })
   @ApiJsonApiBody('users', RegisterDto)
@@ -47,6 +50,7 @@ export class AuthController {
     201,
     jsonApiResourceSchema('users', UserResourceAttributes),
     'The created user',
+    ETAG_RESPONSE_HEADERS,
   )
   @ApiJsonApiError(400, 'Malformed body or invalid attributes')
   @ApiJsonApiError(409, 'Wrong resource type or duplicate email')

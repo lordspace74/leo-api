@@ -12,6 +12,7 @@ import { UpdateUserDto } from './dto/update-user.dto';
 import { User } from './entities/user.entity';
 import { UserRole } from './enums/user-role.enum';
 import { Page } from '../common/serializers/json-api.serializer';
+import { assertIfMatch } from '../common/etag/etag.util';
 
 @Injectable()
 export class UsersService {
@@ -48,6 +49,7 @@ export class UsersService {
     requestingUser: User,
     targetId: string,
     dto: UpdateUserDto,
+    ifMatch?: string,
   ): Promise<User> {
     const isAdmin = requestingUser.role === UserRole.ADMIN;
     const isSelf = requestingUser.id === targetId;
@@ -59,6 +61,10 @@ export class UsersService {
     if (!isAdmin && dto.role) {
       throw new ForbiddenException('Only admins can change roles');
     }
+
+    const target = await this.userRepo.findById(targetId);
+    if (!target) throw new NotFoundException(`User ${targetId} not found`);
+    assertIfMatch(target, ifMatch);
 
     if (dto.email) {
       const owner = await this.userRepo.findByEmail(dto.email);
@@ -72,13 +78,18 @@ export class UsersService {
     return updated;
   }
 
-  async delete(requestingUser: User, targetId: string): Promise<void> {
+  async delete(
+    requestingUser: User,
+    targetId: string,
+    ifMatch?: string,
+  ): Promise<void> {
     if (requestingUser.id === targetId) {
       throw new ForbiddenException('You cannot delete your own account');
     }
 
     const target = await this.userRepo.findById(targetId);
     if (!target) throw new NotFoundException(`User ${targetId} not found`);
+    assertIfMatch(target, ifMatch);
 
     await this.userRepo.delete(targetId);
   }
