@@ -10,6 +10,7 @@ A RESTful API for managing users with role-based access control, built with
 - Role-based authorization (`USER` / `ADMIN`)
 - Request validation with `class-validator`
 - JSON:API-compliant responses and error objects
+- OpenAPI 3 spec + Swagger UI (kept in sync by a test)
 - Layered architecture (controller → service → repository) following SOLID
 
 ## Authorization rules
@@ -99,6 +100,28 @@ application and talks to an isolated database (`leo_api_test` by default,
 overridable via `DB_DATABASE_TEST`); create it once with
 `createdb leo_api_test` (or let TypeORM's `synchronize` build the schema on
 first run).
+
+## OpenAPI / Swagger
+
+The API publishes an OpenAPI 3 document describing the JSON:API envelope for
+every operation (request `{ data: { type, attributes } }`, response
+`{ data: { type, id, attributes } }`, and `{ errors: [...] }` failures).
+
+- **Swagger UI:** `http://localhost:3000/api-docs` (raw JSON at
+  `/api-docs/json`) while the app is running.
+- **Committed spec:** [`openapi.json`](./openapi.json) at the repo root.
+
+Regenerate the committed spec after changing any controller, DTO, or status
+code:
+
+```bash
+npm run openapi:generate   # rewrites openapi.json
+npm run openapi:check      # fails if openapi.json is out of date
+```
+
+`openapi:check` also runs as part of the e2e suite (`openapi.e2e-spec.ts`), so
+CI fails if the spec drifts from the controllers. Both commands run the app in
+NestJS preview mode and need no database.
 
 ## API reference
 

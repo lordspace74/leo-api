@@ -1,0 +1,984 @@
+{
+  "openapi": "3.0.0",
+  "paths": {
+    "/users": {
+      "get": {
+        "operationId": "UsersController_findAll",
+        "parameters": [
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "style": "deepObject",
+            "explode": true,
+            "description": "JSON:API page-based pagination, e.g. `page[number]=1&page[size]=20`",
+            "schema": {
+              "$ref": "#/components/schemas/PageParamsDto"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A paginated collection of users",
+            "content": {
+              "application/vnd.api+json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "data"
+                  ],
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "required": [
+                          "type",
+                          "id",
+                          "attributes"
+                        ],
+                        "properties": {
+                          "type": {
+                            "type": "string",
+                            "enum": [
+                              "users"
+                            ]
+                          },
+                          "id": {
+                            "type": "string",
+                            "format": "uuid"
+                          },
+                          "attributes": {
+                            "$ref": "#/components/schemas/UserResourceAttributes"
+                          }
+                        }
+                      }
+                    },
+                    "meta": {
+                      "type": "object",
+                      "properties": {
+                        "total": {
+                          "type": "integer"
+                        },
+                        "page": {
+                          "type": "integer"
+                        },
+                        "size": {
+                          "type": "integer"
+                        },
+                        "totalPages": {
+                          "type": "integer"
+                        }
+                      }
+                    },
+                    "links": {
+                      "type": "object",
+                      "properties": {
+                        "self": {
+                          "type": "string"
+                        },
+                        "first": {
+                          "type": "string"
+                        },
+                        "prev": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "next": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "last": {
+                          "type": "string"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid pagination parameters",
+            "content": {
+              "application/vnd.api+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/JsonApiErrorDocument"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid access token",
+            "content": {
+              "application/vnd.api+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/JsonApiErrorDocument"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "The authenticated user may not perform this action",
+            "content": {
+              "application/vnd.api+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/JsonApiErrorDocument"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List users (ADMIN only)",
+        "tags": [
+          "users"
+        ]
+      },
+      "post": {
+        "operationId": "UsersController_create",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/vnd.api+json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "data"
+                ],
+                "properties": {
+                  "data": {
+                    "type": "object",
+                    "required": [
+                      "type",
+                      "attributes"
+                    ],
+                    "properties": {
+                      "type": {
+                        "type": "string",
+                        "enum": [
+                          "users"
+                        ]
+                      },
+                      "attributes": {
+                        "$ref": "#/components/schemas/CreateUserDto"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "The created user",
+            "content": {
+              "application/vnd.api+json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "data"
+                  ],
+                  "properties": {
+                    "data": {
+                      "type": "object",
+                      "required": [
+                        "type",
+                        "id",
+                        "attributes"
+                      ],
+                      "properties": {
+                        "type": {
+                          "type": "string",
+                          "enum": [
+                            "users"
+                          ]
+                        },
+                        "id": {
+                          "type": "string",
+                          "format": "uuid"
+                        },
+                        "attributes": {
+                          "$ref": "#/components/schemas/UserResourceAttributes"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Malformed body or invalid attributes",
+            "content": {
+              "application/vnd.api+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/JsonApiErrorDocument"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid access token",
+            "content": {
+              "application/vnd.api+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/JsonApiErrorDocument"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "The authenticated user may not perform this action",
+            "content": {
+              "application/vnd.api+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/JsonApiErrorDocument"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Wrong resource type or duplicate email",
+            "content": {
+              "application/vnd.api+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/JsonApiErrorDocument"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Create a user (ADMIN only)",
+        "tags": [
+          "users"
+        ]
+      }
+    },
+    "/users/{id}": {
+      "get": {
+        "operationId": "UsersController_findOne",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The requested user",
+            "content": {
+              "application/vnd.api+json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "data"
+                  ],
+                  "properties": {
+                    "data": {
+                      "type": "object",
+                      "required": [
+                        "type",
+                        "id",
+                        "attributes"
+                      ],
+                      "properties": {
+                        "type": {
+                          "type": "string",
+                          "enum": [
+                            "users"
+                          ]
+                        },
+                        "id": {
+                          "type": "string",
+                          "format": "uuid"
+                        },
+                        "attributes": {
+                          "$ref": "#/components/schemas/UserResourceAttributes"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Malformed id",
+            "content": {
+              "application/vnd.api+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/JsonApiErrorDocument"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid access token",
+            "content": {
+              "application/vnd.api+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/JsonApiErrorDocument"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "The authenticated user may not perform this action",
+            "content": {
+              "application/vnd.api+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/JsonApiErrorDocument"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "User not found",
+            "content": {
+              "application/vnd.api+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/JsonApiErrorDocument"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get a user by id",
+        "tags": [
+          "users"
+        ]
+      },
+      "patch": {
+        "operationId": "UsersController_update",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/vnd.api+json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "data"
+                ],
+                "properties": {
+                  "data": {
+                    "type": "object",
+                    "required": [
+                      "type",
+                      "attributes"
+                    ],
+                    "properties": {
+                      "type": {
+                        "type": "string",
+                        "enum": [
+                          "users"
+                        ]
+                      },
+                      "attributes": {
+                        "$ref": "#/components/schemas/UpdateUserDto"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The updated user",
+            "content": {
+              "application/vnd.api+json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "data"
+                  ],
+                  "properties": {
+                    "data": {
+                      "type": "object",
+                      "required": [
+                        "type",
+                        "id",
+                        "attributes"
+                      ],
+                      "properties": {
+                        "type": {
+                          "type": "string",
+                          "enum": [
+                            "users"
+                          ]
+                        },
+                        "id": {
+                          "type": "string",
+                          "format": "uuid"
+                        },
+                        "attributes": {
+                          "$ref": "#/components/schemas/UserResourceAttributes"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Malformed id, body, or invalid attributes",
+            "content": {
+              "application/vnd.api+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/JsonApiErrorDocument"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid access token",
+            "content": {
+              "application/vnd.api+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/JsonApiErrorDocument"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "The authenticated user may not perform this action",
+            "content": {
+              "application/vnd.api+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/JsonApiErrorDocument"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "User not found",
+            "content": {
+              "application/vnd.api+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/JsonApiErrorDocument"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Wrong resource type or duplicate email",
+            "content": {
+              "application/vnd.api+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/JsonApiErrorDocument"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Update a user",
+        "tags": [
+          "users"
+        ]
+      },
+      "delete": {
+        "operationId": "UsersController_delete",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "The user was deleted"
+          },
+          "401": {
+            "description": "Missing or invalid access token",
+            "content": {
+              "application/vnd.api+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/JsonApiErrorDocument"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "The authenticated user may not perform this action",
+            "content": {
+              "application/vnd.api+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/JsonApiErrorDocument"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "User not found",
+            "content": {
+              "application/vnd.api+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/JsonApiErrorDocument"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Delete a user (ADMIN only)",
+        "tags": [
+          "users"
+        ]
+      }
+    },
+    "/auth/register": {
+      "post": {
+        "operationId": "AuthController_register",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/vnd.api+json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "data"
+                ],
+                "properties": {
+                  "data": {
+                    "type": "object",
+                    "required": [
+                      "type",
+                      "attributes"
+                    ],
+                    "properties": {
+                      "type": {
+                        "type": "string",
+                        "enum": [
+                          "users"
+                        ]
+                      },
+                      "attributes": {
+                        "$ref": "#/components/schemas/RegisterDto"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "The created user",
+            "content": {
+              "application/vnd.api+json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "data"
+                  ],
+                  "properties": {
+                    "data": {
+                      "type": "object",
+                      "required": [
+                        "type",
+                        "id",
+                        "attributes"
+                      ],
+                      "properties": {
+                        "type": {
+                          "type": "string",
+                          "enum": [
+                            "users"
+                          ]
+                        },
+                        "id": {
+                          "type": "string",
+                          "format": "uuid"
+                        },
+                        "attributes": {
+                          "$ref": "#/components/schemas/UserResourceAttributes"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Malformed body or invalid attributes",
+            "content": {
+              "application/vnd.api+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/JsonApiErrorDocument"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Wrong resource type or duplicate email",
+            "content": {
+              "application/vnd.api+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/JsonApiErrorDocument"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Register a new USER account",
+        "tags": [
+          "auth"
+        ]
+      }
+    },
+    "/auth/login": {
+      "post": {
+        "operationId": "AuthController_login",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "description": "Plain credentials (not a JSON:API document)",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LoginDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The authenticated user with an access token in `meta`",
+            "content": {
+              "application/vnd.api+json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "data"
+                  ],
+                  "properties": {
+                    "data": {
+                      "type": "object",
+                      "required": [
+                        "type",
+                        "id",
+                        "attributes"
+                      ],
+                      "properties": {
+                        "type": {
+                          "type": "string",
+                          "enum": [
+                            "users"
+                          ]
+                        },
+                        "id": {
+                          "type": "string",
+                          "format": "uuid"
+                        },
+                        "attributes": {
+                          "$ref": "#/components/schemas/UserResourceAttributes"
+                        }
+                      }
+                    },
+                    "meta": {
+                      "type": "object",
+                      "properties": {
+                        "access_token": {
+                          "type": "string"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Invalid credentials",
+            "content": {
+              "application/vnd.api+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/JsonApiErrorDocument"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Log in and receive an access token",
+        "tags": [
+          "auth"
+        ]
+      }
+    }
+  },
+  "info": {
+    "title": "LeoVegas User API",
+    "description": "JSON:API-compliant user management API. Responses use the `application/vnd.api+json` media type.",
+    "version": "0.0.1",
+    "contact": {}
+  },
+  "tags": [
+    {
+      "name": "auth",
+      "description": "Registration and login"
+    },
+    {
+      "name": "users",
+      "description": "User management (admin operations and self-service)"
+    }
+  ],
+  "servers": [
+    {
+      "url": "http://localhost:3000",
+      "description": "Local development"
+    }
+  ],
+  "components": {
+    "securitySchemes": {
+      "bearer": {
+        "scheme": "bearer",
+        "bearerFormat": "JWT",
+        "type": "http"
+      }
+    },
+    "schemas": {
+      "UserResourceAttributes": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "example": "Alice"
+          },
+          "email": {
+            "type": "string",
+            "format": "email",
+            "example": "alice@example.com"
+          },
+          "role": {
+            "type": "string",
+            "enum": [
+              "USER",
+              "ADMIN"
+            ],
+            "example": "USER"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "name",
+          "email",
+          "role",
+          "created_at",
+          "updated_at"
+        ]
+      },
+      "JsonApiErrorObject": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string",
+            "example": "404",
+            "description": "HTTP status code as a string"
+          },
+          "title": {
+            "type": "string",
+            "example": "User not found"
+          }
+        },
+        "required": [
+          "status",
+          "title"
+        ]
+      },
+      "JsonApiErrorDocument": {
+        "type": "object",
+        "properties": {
+          "errors": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/JsonApiErrorObject"
+            }
+          }
+        },
+        "required": [
+          "errors"
+        ]
+      },
+      "CreateUserDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "example": "Alice"
+          },
+          "email": {
+            "type": "string",
+            "format": "email",
+            "example": "alice@example.com"
+          },
+          "password": {
+            "type": "string",
+            "format": "password",
+            "minLength": 6,
+            "example": "password"
+          },
+          "role": {
+            "type": "string",
+            "enum": [
+              "USER",
+              "ADMIN"
+            ],
+            "default": "USER"
+          }
+        },
+        "required": [
+          "name",
+          "email",
+          "password"
+        ]
+      },
+      "UpdateUserDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "example": "Alice"
+          },
+          "email": {
+            "type": "string",
+            "format": "email",
+            "example": "alice@example.com"
+          },
+          "password": {
+            "type": "string",
+            "format": "password",
+            "minLength": 6,
+            "example": "password"
+          },
+          "role": {
+            "type": "string",
+            "enum": [
+              "USER",
+              "ADMIN"
+            ]
+          }
+        }
+      },
+      "PageParamsDto": {
+        "type": "object",
+        "properties": {
+          "number": {
+            "type": "integer",
+            "minimum": 1,
+            "default": 1
+          },
+          "size": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 100,
+            "default": 20
+          }
+        }
+      },
+      "RegisterDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "example": "Alice"
+          },
+          "email": {
+            "type": "string",
+            "format": "email",
+            "example": "alice@example.com"
+          },
+          "password": {
+            "type": "string",
+            "format": "password",
+            "minLength": 6,
+            "example": "password"
+          }
+        },
+        "required": [
+          "name",
+          "email",
+          "password"
+        ]
+      },
+      "LoginDto": {
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "string",
+            "format": "email",
+            "example": "alice@example.com"
+          },
+          "password": {
+            "type": "string",
+            "format": "password",
+            "minLength": 6,
+            "example": "password"
+          }
+        },
+        "required": [
+          "email",
+          "password"
+        ]
+      }
+    }
+  }
+}
