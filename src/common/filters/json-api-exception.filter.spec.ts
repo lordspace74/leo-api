@@ -2,6 +2,7 @@ import {
   ArgumentsHost,
   BadRequestException,
   NotFoundException,
+  ServiceUnavailableException,
   Logger,
 } from '@nestjs/common';
 import { QueryFailedError } from 'typeorm';
@@ -15,13 +16,16 @@ describe('JsonApiExceptionFilter', () => {
     jest.spyOn(Logger.prototype, 'error').mockImplementation(() => undefined);
   });
 
-  const buildHost = () => {
+  const buildHost = (path = '/users') => {
     const json = jest.fn();
     const setHeader = jest.fn().mockReturnThis();
     const res: Record<string, jest.Mock> = { setHeader, json };
     const status = jest.fn().mockReturnValue(res);
     const host = {
-      switchToHttp: () => ({ getResponse: () => ({ status }) }),
+      switchToHttp: () => ({
+        getResponse: () => ({ status }),
+        getRequest: () => ({ path }),
+      }),
     } as unknown as ArgumentsHost;
     return { host, status, json, setHeader };
   };
@@ -90,5 +94,20 @@ describe('JsonApiExceptionFilter', () => {
     expect(json).toHaveBeenCalledWith({
       errors: [{ status: '500', title: 'An unexpected error occurred' }],
     });
+  });
+
+  it('passes a failed /health check through with its native body', () => {
+    const { host, status, json, setHeader } = buildHost('/health');
+    const healthBody = {
+      status: 'error',
+      details: { database: { status: 'down' } },
+    };
+
+    filter.catch(new ServiceUnavailableException(healthBody), host);
+
+    expect(status).toHaveBeenCalledWith(503);
+    expect(json).toHaveBeenCalledWith(healthBody);
+    // not wrapped as a JSON:API error document, no JSON:API media type
+    expect(setHeader).not.toHaveBeenCalled();
   });
 });

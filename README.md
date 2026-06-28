@@ -12,6 +12,7 @@ A RESTful API for managing users with role-based access control, built with
 - JSON:API-compliant responses and error objects
 - OpenAPI 3 spec + Swagger UI (kept in sync by a test)
 - ETag caching (`304`) and optimistic concurrency (`If-Match` → `412`/`428`)
+- Health/readiness endpoint (`GET /health`) with a database ping
 - Layered architecture (controller → service → repository) following SOLID
 
 ## Authorization rules
@@ -252,6 +253,29 @@ curl -X PATCH http://localhost:3000/users/<id> \
 
 Read the resource (or reuse the `ETag` from the previous write response) to get
 the current tag before retrying.
+
+## Health check
+
+`GET /health` is a public, unauthenticated operational endpoint (via
+`@nestjs/terminus`) that pings the database, for load-balancer and orchestrator
+probes. It returns Terminus's native shape — **not** JSON:API — so it is exempt
+from the `application/vnd.api+json` media type and error envelope.
+
+```bash
+curl http://localhost:3000/health
+```
+
+```json
+{
+  "status": "ok",
+  "info": { "database": { "status": "up" } },
+  "error": {},
+  "details": { "database": { "status": "up" } }
+}
+```
+
+Responds `200` when all checks pass and `503` (same body shape, `status:
+"error"`) when a dependency such as the database is unavailable.
 
 ## Design notes
 

@@ -26,6 +26,7 @@ export function buildOpenApiDocument(app: INestApplication): OpenAPIObject {
     .addServer('http://localhost:3000', 'Local development')
     .addTag('auth', 'Registration and login')
     .addTag('users', 'User management (admin operations and self-service)')
+    .addTag('health', 'Service health and readiness')
     .addBearerAuth()
     .build();
 

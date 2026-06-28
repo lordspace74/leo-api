@@ -7,7 +7,7 @@ import {
   Logger,
 } from '@nestjs/common';
 import { QueryFailedError } from 'typeorm';
-import { Response } from 'express';
+import { Request, Response } from 'express';
 
 /** Postgres unique-violation error code. */
 const PG_UNIQUE_VIOLATION = '23505';
@@ -17,7 +17,19 @@ export class JsonApiExceptionFilter implements ExceptionFilter {
   private readonly logger = new Logger(JsonApiExceptionFilter.name);
 
   catch(exception: unknown, host: ArgumentsHost): void {
-    const response = host.switchToHttp().getResponse<Response>();
+    const http = host.switchToHttp();
+    const response = http.getResponse<Response>();
+
+    // `/health` is a plain ops endpoint: pass a failed health check (503)
+    // through with Terminus's own result body instead of a JSON:API error.
+    if (
+      http.getRequest<Request>().path === '/health' &&
+      exception instanceof HttpException
+    ) {
+      response.status(exception.getStatus()).json(exception.getResponse());
+      return;
+    }
+
     const { status, detail } = this.resolve(exception);
 
     if (status >= Number(HttpStatus.INTERNAL_SERVER_ERROR)) {
