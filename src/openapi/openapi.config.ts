@@ -23,7 +23,7 @@ export function buildOpenApiDocument(app: INestApplication): OpenAPIObject {
         '`application/vnd.api+json` media type.',
     )
     .setVersion('0.0.1')
-    .addServer('http://localhost:3000', 'Local development')
+    .addServer(process.env.OPENAPI_SERVER_URL ?? 'http://localhost:3000', 'API server')
     .addTag('auth', 'Registration and login')
     .addTag('users', 'User management (admin operations and self-service)')
     .addTag('health', 'Service health and readiness')
