@@ -9,6 +9,7 @@ import {
   getSchemaPath,
 } from '@nestjs/swagger';
 import { UserRole } from '../../users/enums/user-role.enum';
+import { JSON_API_MEDIA_TYPE } from '../json-api/media-type';
 
 // `SchemaObject`/`ReferenceObject` are not re-exported from the package root, so
 // we recover the schema type from the public `ApiResponse` options instead of
@@ -21,8 +22,7 @@ type SchemaObject = ApiResponseSchemaOptions['schema'];
 type ResponseHeaders = ApiResponseSchemaOptions['headers'];
 type ReferenceObject = { $ref: string };
 
-/** The JSON:API media type carried by every response (and write request) body. */
-export const JSON_API_MEDIA_TYPE = 'application/vnd.api+json';
+export { JSON_API_MEDIA_TYPE };
 
 /** Documents the `ETag` validator emitted on single-resource responses. */
 export const ETAG_RESPONSE_HEADERS: ResponseHeaders = {

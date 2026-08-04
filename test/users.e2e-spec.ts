@@ -11,6 +11,7 @@ import { configureApp } from '../src/app.setup';
 import { USER_REPOSITORY } from '../src/users/interfaces/user-repository.interface';
 import type { IUserRepository } from '../src/users/interfaces/user-repository.interface';
 import { UserRole } from '../src/users/enums/user-role.enum';
+import { JSON_API_MEDIA_TYPE } from '../src/common/json-api/media-type';
 
 const NONEXISTENT_ID = '00000000-0000-0000-0000-000000000000';
 const doc = (attributes: Record<string, unknown>) => ({
@@ -110,6 +111,63 @@ describe('Users API (e2e)', () => {
         .post('/auth/login')
         .send({ email: 'alice@e2e.test', password: 'wrongpassword' })
         .expect(401));
+  });
+
+  // The OpenAPI document declares `application/vnd.api+json` on every write, so
+  // this is what Swagger "Try it out" — and any spec-conforming client — sends.
+  // The rest of the suite relies on supertest's default `application/json`,
+  // which is why these are exercised explicitly.
+  describe('JSON:API media type on request bodies', () => {
+    const asJsonApi = (req: request.Test, body: unknown) =>
+      req.set('Content-Type', JSON_API_MEDIA_TYPE).send(JSON.stringify(body));
+
+    let targetId: string;
+
+    it('accepts a registration document (201)', async () => {
+      const res = await asJsonApi(
+        request(http).post('/auth/register'),
+        doc({ name: 'Mona', email: 'mona@e2e.test', password: 'password' }),
+      ).expect(201);
+
+      expect(res.headers['content-type']).toContain(JSON_API_MEDIA_TYPE);
+      expect(res.body.data.attributes.email).toBe('mona@e2e.test');
+    });
+
+    it('accepts a create document (201)', async () => {
+      const res = await asJsonApi(
+        request(http)
+          .post('/users')
+          .set('Authorization', `Bearer ${adminToken}`),
+        doc({ name: 'Nils', email: 'nils@e2e.test', password: 'password' }),
+      ).expect(201);
+
+      expect(res.body.data.attributes.name).toBe('Nils');
+      targetId = res.body.data.id;
+    });
+
+    it('accepts an update document (200)', async () => {
+      const read = await request(http)
+        .get(`/users/${targetId}`)
+        .set('Authorization', `Bearer ${adminToken}`)
+        .expect(200);
+
+      const res = await asJsonApi(
+        request(http)
+          .patch(`/users/${targetId}`)
+          .set('Authorization', `Bearer ${adminToken}`)
+          .set('If-Match', read.headers.etag),
+        doc({ name: 'Nils Updated' }),
+      ).expect(200);
+
+      expect(res.body.data.attributes.name).toBe('Nils Updated');
+    });
+
+    it('still rejects a body under an unparseable content type (400)', () =>
+      request(http)
+        .post('/auth/register')
+        .set('Content-Type', 'text/plain')
+        .send(JSON.stringify(doc({ name: 'Nope' })))
+        .expect(400));
   });
 
   describe('USER authorization', () => {
