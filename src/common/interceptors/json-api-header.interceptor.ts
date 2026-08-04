@@ -7,6 +7,7 @@ import {
 import { Observable } from 'rxjs';
 import { tap } from 'rxjs/operators';
 import { Request, Response } from 'express';
+import { JSON_API_MEDIA_TYPE } from '../json-api/media-type';
 
 /**
  * Sets the JSON:API media type on every successful response. Applied globally
@@ -23,7 +24,7 @@ export class JsonApiHeaderInterceptor implements NestInterceptor {
     return next.handle().pipe(
       tap(() => {
         if (request.path !== '/health') {
-          response.setHeader('Content-Type', 'application/vnd.api+json');
+          response.setHeader('Content-Type', JSON_API_MEDIA_TYPE);
         }
       }),
     );

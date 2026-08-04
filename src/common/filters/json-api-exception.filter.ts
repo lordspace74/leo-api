@@ -8,6 +8,7 @@ import {
 } from '@nestjs/common';
 import { QueryFailedError } from 'typeorm';
 import { Request, Response } from 'express';
+import { JSON_API_MEDIA_TYPE } from '../json-api/media-type';
 
 /** Postgres unique-violation error code. */
 const PG_UNIQUE_VIOLATION = '23505';
@@ -42,7 +43,7 @@ export class JsonApiExceptionFilter implements ExceptionFilter {
 
     response
       .status(status)
-      .setHeader('Content-Type', 'application/vnd.api+json')
+      .setHeader('Content-Type', JSON_API_MEDIA_TYPE)
       .json({ errors });
   }
 
